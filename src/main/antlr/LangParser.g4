@@ -104,7 +104,7 @@ expr
     ;
 
 assignment
-    : Identifier (Colon Identifier)? assignmentOperator assignableExpr
+    : Const? At? Identifier (Colon Identifier)? assignmentOperator assignableExpr
     ;
 
 assignmentOperator

@@ -3,7 +3,7 @@ a = 10;
 b = 20;
 c = a + b()(a());
 
-smth.method(vararg=2, "arg");
+smth.method(vararg=2, "arg", 'arg');
 
 a ^^= true;
 

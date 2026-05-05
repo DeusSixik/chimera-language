@@ -4,6 +4,7 @@ import net.aros.language.LangParser;
 import net.aros.language.LangParserBaseVisitor;
 import net.aros.language.ast.Either;
 import net.aros.language.ast.SourcePos;
+import net.aros.language.ast.VarModifier;
 import net.aros.language.ast.first.Expr;
 import net.aros.language.ast.first.Node;
 import net.aros.language.ast.first.Program;
@@ -17,9 +18,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.IntFunction;
 
 import static com.ibm.icu.impl.Utility.unescape;
@@ -173,7 +172,11 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
 
     @Override
     public Node visitAssignment(LangParser.AssignmentContext ctx) {
+        List<VarModifier> modifiers = new ArrayList<>();
+        if (ctx.Const() != null) modifiers.add(VarModifier.CONST);
+        if (ctx.At() != null) modifiers.add(VarModifier.STATIC);
         return new Expr.AssignExpr(
+                List.copyOf(modifiers),
                 ctx.Identifier(0).getText(),
                 ctx.Identifier(1) == null ? Optional.empty() : Optional.of(ctx.Identifier(1).getText()),
                 (Expr) visit(ctx.assignableExpr()),

@@ -11,7 +11,7 @@ import java.nio.file.Path;
 
 public class Lang {
     public static void main(String[] args) throws URISyntaxException, IOException {
-        String text = Files.readString(Path.of(Lang.class.getResource("/file.l").toURI()));
+        String text = Files.readString(Path.of(Lang.class.getResource("/third.l").toURI()));
 
         Program program = new LangParser().parse(text);
         PrintVisitor visitor = new PrintVisitor();

@@ -16,6 +16,7 @@ In                       : 'in'         ;
 Do                       : 'do'         ;
 Fn                       : 'fn'         ;
 Return                   : 'return'     ;
+Const                    : 'const'      ;
 
 // Symbols
 LParen                   : '('          ;
@@ -29,6 +30,7 @@ Semicolon                : ';'          ;
 Comma                    : ','          ;
 Dot                      : '.'          ;
 QuestionMark             : '?'          ;
+At                       : '@'          ;
 
 // Operators
 PlusAssign               : '+='         ;
@@ -72,7 +74,10 @@ Assign                   : '='          ;
 Identifier    : [a-zA-Z_][a-zA-Z0-9_]*           ;
 IntLiteral    : [0-9]+                           ;
 FloatLiteral  : [0-9]* '.' [0-9]+                ;
-StringLiteral : '"' ( '\\' . | ~["\\\r\n] )* '"' ;
+StringLiteral
+    : '"' ( '\\' . | ~["\\\r\n] )* '"'
+    | '\'' ( '\\' . | ~['\\\r\n] )* '\''
+    ;
 LineComment   : '//' ~[\r\n]*            -> skip ;
 BlockComment  : '/*' .*? '*/'            -> skip ;
 WS            : [ \t\r\n]+               -> skip ;
