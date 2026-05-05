@@ -2,6 +2,7 @@ package net.aros.language.ast.ops;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.SequencedCollection;
 
 public enum BinaryOp {
     BITWISE_OR("|"),
@@ -34,5 +35,9 @@ public enum BinaryOp {
     public static Optional<BinaryOp> byValue(String value) {
         for (var op : values()) if (op.values.contains(value)) return Optional.of(op);
         return Optional.empty();
+    }
+
+    public List<String> getValues() {
+        return values;
     }
 }

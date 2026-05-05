@@ -1,9 +1,8 @@
 package net.aros.language;
 
 import net.aros.language.ast.first.Program;
-import net.aros.language.parsing.Antlr2LangVisitor;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
+import net.aros.language.parsing.LangParser;
+import net.aros.language.parsing.test.PrintVisitor;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -14,10 +13,11 @@ public class Lang {
     public static void main(String[] args) throws URISyntaxException, IOException {
         String text = Files.readString(Path.of(Lang.class.getResource("/file.l").toURI()));
 
-        net.aros.language.LangLexer lexer = new net.aros.language.LangLexer(CharStreams.fromString(text));
-        net.aros.language.LangParser parser = new net.aros.language.LangParser(new CommonTokenStream(lexer));
-        Program node = (Program) new Antlr2LangVisitor().visit(parser.program());
+        Program program = new LangParser().parse(text);
+        PrintVisitor visitor = new PrintVisitor();
 
-        System.out.println(node);
+        System.out.println(program);
+        visitor.visit(program);
+        System.out.println(visitor);
     }
 }

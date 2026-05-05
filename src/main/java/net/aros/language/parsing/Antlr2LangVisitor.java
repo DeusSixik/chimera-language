@@ -2,6 +2,7 @@ package net.aros.language.parsing;
 
 import net.aros.language.LangParser;
 import net.aros.language.LangParserBaseVisitor;
+import net.aros.language.ast.Either;
 import net.aros.language.ast.SourcePos;
 import net.aros.language.ast.first.Expr;
 import net.aros.language.ast.first.Node;
@@ -18,6 +19,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.IntFunction;
 
 import static com.ibm.icu.impl.Utility.unescape;
@@ -36,6 +38,7 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
         if (ctx.forStmt() != null) return visit(ctx.forStmt());
         if (ctx.exprStmt() != null) return visit(ctx.exprStmt());
         if (ctx.fnStmt() != null) return visit(ctx.fnStmt());
+        if (ctx.returnStmt() != null) return visit(ctx.returnStmt());
         throw new IllegalArgumentException("Unknown stmt");
     }
 
@@ -43,15 +46,26 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     public Node visitFnStmt(LangParser.FnStmtContext ctx) {
         return new Stmt.FnStmt(
                 ctx.Identifier().getText(),
-                ctx.identifiersZeroOrMore().Identifier().stream().map(TerminalNode::getText).toList(),
-                (Stmt.BlockStmt) visit(ctx.block()),
+                ctx.parameters().parameter().stream().map(p -> (Expr.ParameterExpr) visit(p)).toList(),
+                ctx.block() == null ? Either.right((Expr) visit(ctx.expr())) : Either.left((Stmt.BlockStmt) visit(ctx.block())),
                 pos(ctx)
         );
     }
 
     @Override
+    public Node visitParameter(LangParser.ParameterContext ctx) {
+        String type = ctx.Identifier(1) == null ? null : ctx.Identifier(1).getText();
+        return new Expr.ParameterExpr(ctx.Identifier(0).getText(), Optional.ofNullable(type), visitNullable(ctx.expr(), Expr.class), pos(ctx));
+    }
+
+    @Override
+    public Node visitReturnStmt(LangParser.ReturnStmtContext ctx) {
+        return new Stmt.ReturnStmt(visitNullable(ctx.assignableExpr(), Expr.class), pos(ctx));
+    }
+
+    @Override
     public Node visitExprStmt(LangParser.ExprStmtContext ctx) {
-        return new Stmt.ExprStmt((Expr) visit(ctx.expr()), pos(ctx));
+        return new Stmt.ExprStmt((Expr) visit(ctx.assignableExpr()), pos(ctx));
     }
 
     @Override
@@ -64,12 +78,12 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
 
     @Override
     public Node visitParenIfStmt(LangParser.ParenIfStmtContext ctx) {
-        return new Stmt.IfStmt((Expr) visit(ctx.expr()), (Stmt.BlockStmt) visit(ctx.block(0)), ctx.block(1) == null ? null : (Stmt.BlockStmt) visit(ctx.block(1)), pos(ctx));
+        return new Stmt.IfStmt((Expr) visit(ctx.assignableExpr()), (Stmt) visit(ctx.blockOrStmt(0)), visitNullable(ctx.blockOrStmt(1), Stmt.class), pos(ctx));
     }
 
     @Override
     public Node visitParenlessIfStmt(LangParser.ParenlessIfStmtContext ctx) {
-        return new Stmt.IfStmt((Expr) visit(ctx.expr()), (Stmt.BlockStmt) visit(ctx.block(0)), ctx.block(1) == null ? null : (Stmt.BlockStmt) visit(ctx.block(1)), pos(ctx));
+        return new Stmt.IfStmt((Expr) visit(ctx.assignableExpr()), (Stmt) visit(ctx.blockOrStmt(0)), visitNullable(ctx.blockOrStmt(1), Stmt.class), pos(ctx));
     }
 
     @Override
@@ -83,9 +97,9 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     @Override
     public Node visitParenForStmt(LangParser.ParenForStmtContext ctx) {
         return new Stmt.ForStmt(
-                ctx.identifiersOneOrMore().Identifier().stream().map(TerminalNode::getText).toList(),
-                (Expr) visit(ctx.expr()),
-                (Stmt.BlockStmt) visit(ctx.block()),
+                ctx.Identifier().stream().map(TerminalNode::getText).toList(),
+                (Expr) visit(ctx.assignableExpr()),
+                (Stmt) visit(ctx.blockOrStmt()),
                 pos(ctx)
         );
     }
@@ -93,9 +107,9 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     @Override
     public Node visitParenlessForStmt(LangParser.ParenlessForStmtContext ctx) {
         return new Stmt.ForStmt(
-                ctx.identifiersOneOrMore().Identifier().stream().map(TerminalNode::getText).toList(),
-                (Expr) visit(ctx.expr()),
-                (Stmt.BlockStmt) visit(ctx.block()),
+                ctx.Identifier().stream().map(TerminalNode::getText).toList(),
+                (Expr) visit(ctx.assignableExpr()),
+                (Stmt) visit(ctx.blockOrStmt()),
                 pos(ctx)
         );
     }
@@ -110,12 +124,12 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
 
     @Override
     public Node visitParenDoWhileStmt(LangParser.ParenDoWhileStmtContext ctx) {
-        return new Stmt.DoWhileStmt((Stmt.BlockStmt) visit(ctx.block()), (Expr) visit(ctx.expr()), pos(ctx));
+        return new Stmt.DoWhileStmt((Stmt.BlockStmt) visit(ctx.block()), (Expr) visit(ctx.assignableExpr()), pos(ctx));
     }
 
     @Override
     public Node visitParenlessDoWhileStmt(LangParser.ParenlessDoWhileStmtContext ctx) {
-        return new Stmt.DoWhileStmt((Stmt.BlockStmt) visit(ctx.block()), (Expr) visit(ctx.expr()), pos(ctx));
+        return new Stmt.DoWhileStmt((Stmt.BlockStmt) visit(ctx.block()), (Expr) visit(ctx.assignableExpr()), pos(ctx));
     }
 
     @Override
@@ -128,12 +142,12 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
 
     @Override
     public Node visitParenWhileStmt(LangParser.ParenWhileStmtContext ctx) {
-        return new Stmt.WhileStmt((Expr) visit(ctx.expr()), (Stmt.BlockStmt) visit(ctx.block()), pos(ctx));
+        return new Stmt.WhileStmt((Expr) visit(ctx.assignableExpr()), (Stmt.BlockStmt) visit(ctx.block()), pos(ctx));
     }
 
     @Override
     public Node visitParenlessWhileStmt(LangParser.ParenlessWhileStmtContext ctx) {
-        return new Stmt.WhileStmt((Expr) visit(ctx.expr()), (Stmt.BlockStmt) visit(ctx.block()), pos(ctx));
+        return new Stmt.WhileStmt((Expr) visit(ctx.assignableExpr()), (Stmt.BlockStmt) visit(ctx.block()), pos(ctx));
     }
 
     @Override
@@ -144,21 +158,27 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     @Override
     public Node visitExpr(LangParser.ExprContext ctx) {
         if (ctx.lambda() != null) return visit(ctx.lambda());
-        if (ctx.assignment() != null) return visit(ctx.assignment());
-//        if (ctx.logicalOr() != null) return visit(ctx.logicalOr());
+        if (ctx.logicalOr() != null) return visit(ctx.logicalOr());
 
         throw new IllegalArgumentException("Unknown expr");
     }
 
     @Override
     public Node visitLambda(LangParser.LambdaContext ctx) {
-        return new Expr.LambdaExpr(ctx.identifiersZeroOrMore().Identifier().stream().map(TerminalNode::getText).toList(), (Stmt.BlockStmt) visit(ctx.block()), pos(ctx));
+        return new Expr.LambdaExpr(
+                ctx.parameters().parameter().stream().map(p -> (Expr.ParameterExpr) visit(p)).toList(),
+                ctx.block() == null ? Either.right((Expr) visit(ctx.expr())) : Either.left((Stmt.BlockStmt) visit(ctx.block())), pos(ctx)
+        );
     }
 
     @Override
     public Node visitAssignment(LangParser.AssignmentContext ctx) {
-        if (ctx.logicalOr() != null) return visit(ctx.logicalOr());
-        return new Expr.AssignExpr(ctx.Identifier(0).getText(), ctx.Identifier(1) == null ? null : ctx.Identifier(1).getText(), (Expr) visit(ctx.expr()), pos(ctx));
+        return new Expr.AssignExpr(
+                ctx.Identifier(0).getText(),
+                ctx.Identifier(1) == null ? Optional.empty() : Optional.of(ctx.Identifier(1).getText()),
+                (Expr) visit(ctx.assignableExpr()),
+                pos(ctx)
+        );
     }
 
     @Override
@@ -228,21 +248,26 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     public Node visitCall(LangParser.CallContext ctx) {
         Expr expr = (Expr) visit(ctx.primary());
         for (int i = 0; i < ctx.LParen().size(); i++) {
-            expr = new Expr.CallExpr(expr, ctx.exprsZeroOrMore(i).expr().stream().map(e -> (Expr) visit(e)).toList(), pos(ctx));
+            expr = new Expr.CallExpr(expr,
+                    ctx.Identifier() == null
+                            ? Optional.empty()
+                            : Optional.of(ctx.Identifier().getText()),
+                    ctx.arguments(i).argument().stream().map(e -> (Expr.ArgumentExpr) visit(e)).toList(), pos(ctx)
+            );
         }
         return expr;
     }
 
     @Override
     public Node visitListLiteral(LangParser.ListLiteralContext ctx) {
-        return new Expr.LiteralExpr(ctx.exprsZeroOrMore().expr().stream().map(this::visit).toList(), pos(ctx));
+        return new Expr.LiteralExpr(ctx.assignableExpr().stream().map(this::visit).toList(), pos(ctx));
     }
 
     @Override
     public Node visitMapLiteral(LangParser.MapLiteralContext ctx) {
         Map<Node, Node> map = new HashMap<>();
         for (int i = 0; i < ctx.Colon().size(); i++) {
-            map.put(visit(ctx.expr(i)), visit(ctx.expr(i + 1)));
+            map.put(visit(ctx.assignableExpr(i)), visit(ctx.assignableExpr(i + 1)));
         }
         return new Expr.LiteralExpr(Map.copyOf(map), pos(ctx));
     }
@@ -262,9 +287,26 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
         if (ctx.False() != null) return new Expr.LiteralExpr(false, pos(ctx));
         if (ctx.Null() != null) return new Expr.LiteralExpr(null, pos(ctx));
         if (ctx.Identifier() != null) return new Expr.LiteralExpr(ctx.Identifier().getText(), pos(ctx));
-        if (ctx.expr() != null) return visit(ctx.expr());
+        if (ctx.assignableExpr() != null) return visit(ctx.assignableExpr());
 
         throw new IllegalArgumentException("Unknown primary");
+    }
+
+    @Override
+    public Node visitArgument(LangParser.ArgumentContext ctx) {
+        return new Expr.ArgumentExpr(ctx.Identifier() == null ? null : ctx.Identifier().getText(), visitNullable(ctx.expr(), Expr.class), pos(ctx));
+    }
+
+    @Override
+    public Node visitAssignableExpr(LangParser.AssignableExprContext ctx) {
+        if (ctx.assignment() != null) return visit(ctx.assignment());
+        return visit(ctx.expr());
+    }
+
+    @Override
+    public Node visitBlockOrStmt(LangParser.BlockOrStmtContext ctx) {
+        if (ctx.block() != null) return visit(ctx.block());
+        return visit(ctx.stmt());
     }
 
     private static SourcePos pos(ParserRuleContext ctx) {
@@ -280,5 +322,10 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
             expr = new Expr.BinaryExpr(expr, op, right, pos(ctx));
         }
         return expr;
+    }
+
+    private <T extends Node> Optional<T> visitNullable(ParseTree parseTree, Class<T> type) {
+        if (parseTree == null) return Optional.empty();
+        return Optional.of(type.cast(visit(parseTree)));
     }
 }

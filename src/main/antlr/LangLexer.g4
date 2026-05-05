@@ -15,6 +15,7 @@ Null                     : 'null'       ;
 In                       : 'in'         ;
 Do                       : 'do'         ;
 Fn                       : 'fn'         ;
+Return                   : 'return'     ;
 
 // Symbols
 LParen                   : '('          ;
@@ -24,7 +25,9 @@ RBrace                   : '}'          ;
 LBracket                 : '['          ;
 RBracket                 : ']'          ;
 Colon                    : ':'          ;
+Semicolon                : ';'          ;
 Comma                    : ','          ;
+Dot                      : '.'          ;
 QuestionMark             : '?'          ;
 
 // Operators
@@ -66,25 +69,10 @@ GreaterEqual             : '>='         ;
 Greater                  : '>'          ;
 Assign                   : '='          ;
 
-//AnyAssignment
-//    : PlusAssign
-//    | MinusAssign
-//    | MultiplyAssign
-//    | DivideAssign
-//    | ModuloAssign
-//    | BitAndAssign
-//    | BitOrAssign
-//    | BitXorAssign
-//    | ShiftLeftAssign
-//    | ShiftRightAssign
-//    | ShiftRightUnsignedAssign
-//    | LogicAndAssign
-//    | LogicOrAssign
-//    | LogicXorAssign
-//    | Assign;
-
 Identifier    : [a-zA-Z_][a-zA-Z0-9_]*           ;
 IntLiteral    : [0-9]+                           ;
 FloatLiteral  : [0-9]* '.' [0-9]+                ;
 StringLiteral : '"' ( '\\' . | ~["\\\r\n] )* '"' ;
-WS            : [ \t\r\n]+ -> skip               ;
+LineComment   : '//' ~[\r\n]*            -> skip ;
+BlockComment  : '/*' .*? '*/'            -> skip ;
+WS            : [ \t\r\n]+               -> skip ;

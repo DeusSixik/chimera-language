@@ -16,15 +16,20 @@ stmt
     | doWhileStmt
     | whileStmt
     | forStmt
+    | returnStmt
     | exprStmt
     ;
 
 exprStmt
-    : expr
+    : assignableExpr Semicolon
     ;
 
 fnStmt
-    : Fn Identifier LParen identifiersZeroOrMore RParen block
+    : Fn Identifier LParen parameters RParen (block | (Assign expr))
+    ;
+
+returnStmt
+    : Return assignableExpr? Semicolon
     ;
 
 ifStmt
@@ -33,11 +38,16 @@ ifStmt
     ;
 
 parenIfStmt
-    : If LParen expr RParen block (Else block)?
+    : If LParen assignableExpr RParen blockOrStmt (Else blockOrStmt)?
     ;
 
 parenlessIfStmt
-    : If expr block (Else block)?
+    : If assignableExpr blockOrStmt (Else blockOrStmt)?
+    ;
+
+blockOrStmt
+    : block
+    | stmt
     ;
 
 forStmt
@@ -46,11 +56,11 @@ forStmt
     ;
 
 parenForStmt
-    : For LParen identifiersOneOrMore In expr RParen block
+    : For LParen (Identifier (Comma Identifier)*) In assignableExpr RParen blockOrStmt
     ;
 
 parenlessForStmt
-    : For identifiersOneOrMore In expr block
+    : For (Identifier (Comma Identifier)*) In assignableExpr blockOrStmt
     ;
 
 doWhileStmt
@@ -59,11 +69,11 @@ doWhileStmt
     ;
 
 parenDoWhileStmt
-    : Do block While LParen expr RParen
+    : Do block While LParen assignableExpr RParen Semicolon
     ;
 
 parenlessDoWhileStmt
-    : Do block While expr
+    : Do block While assignableExpr Semicolon
     ;
 
 whileStmt
@@ -72,25 +82,29 @@ whileStmt
     ;
 
 parenWhileStmt
-    : While LParen expr RParen block
+    : While LParen assignableExpr RParen block
     ;
 
 parenlessWhileStmt
-    : While expr block
+    : While assignableExpr block
     ;
 
 block
     : LBrace stmt* RBrace
     ;
 
-expr
+assignableExpr
     : assignment
-    | lambda
+    | expr
+    ;
+
+expr
+    : lambda
+    | logicalOr
     ;
 
 assignment
-    : Identifier (Colon Identifier)? assignmentOperator expr
-    | logicalOr
+    : Identifier (Colon Identifier)? assignmentOperator assignableExpr
     ;
 
 assignmentOperator
@@ -112,7 +126,7 @@ assignmentOperator
     ;
 
 lambda
-    : Fn LParen identifiersZeroOrMore RParen block
+    : Fn LParen parameters RParen (block | (Assign expr))
     ;
 
 logicalOr
@@ -165,19 +179,23 @@ unary
     ;
 
 call
-    : primary (LParen exprsZeroOrMore RParen)*
+    : primary (Dot Identifier)? (LParen arguments RParen)*
     ;
 
-identifiersZeroOrMore
-    : (Identifier (Comma Identifier)*)?
+arguments
+    : (argument (Comma argument)*)?
     ;
 
-identifiersOneOrMore
-    : Identifier (Comma Identifier)*
+argument
+    : (Identifier Assign)? expr
     ;
 
-exprsZeroOrMore
-    : (expr (Comma expr)*)?
+parameters
+    : (parameter (Comma parameter)*)?
+    ;
+
+parameter
+    : Identifier (Colon Identifier)? (Assign expr)?
     ;
 
 primary
@@ -190,13 +208,13 @@ primary
     | False
     | Null
     | Identifier
-    | LParen expr RParen
+    | LParen assignableExpr RParen
     ;
 
 listLiteral
-    : LBracket exprsZeroOrMore RBracket
+    : LBracket (assignableExpr (Comma assignableExpr)*)? RBracket
     ;
 
 mapLiteral
-    : LBrace ((expr Colon expr) (Comma (expr Colon expr))*)? RBrace
+    : LBrace ((assignableExpr Colon assignableExpr) (Comma (assignableExpr Colon assignableExpr))*)? RBrace
     ;
