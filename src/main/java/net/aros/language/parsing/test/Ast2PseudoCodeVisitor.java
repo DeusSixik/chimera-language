@@ -1,0 +1,190 @@
+package net.aros.language.parsing.test;
+
+import net.aros.language.ast.Modifier;
+import net.aros.language.ast.first.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
+public class Ast2PseudoCodeVisitor implements LangVisitor<String> {
+    @Override
+    public String visitProgram(Program program) {
+        return build(b -> {
+            for (Stmt stmt : program.stmts()) {
+                b.append(visit(stmt)).append("\n");
+            }
+        });
+    }
+
+    @Override
+    public String visitExprStmt(Stmt.ExprStmt stmt) {
+        return visit(stmt.expr()) + ";";
+    }
+
+    @Override
+    public String visitIfStmt(Stmt.IfStmt stmt) {
+        return build(b -> {
+            b.append("if ").append(visit(stmt.cond())).append(" ").append(visit(stmt.thenStmt()));
+            stmt.elseStmt().ifPresent(elseStmt -> b.append(" ").append(visit(elseStmt)));
+        });
+    }
+
+    @Override
+    public String visitBlockStmt(Stmt.BlockStmt stmt) {
+        return build(b -> {
+            b.append("{\n");
+            for (Stmt subStmt : stmt.stmts()) {
+                b.append("    ").append(visit(subStmt)).append("\n");
+            }
+            b.append("}");
+        });
+    }
+
+    @Override
+    public String visitWhileStmt(Stmt.WhileStmt stmt) {
+        return build(b -> b.append("while ").append(visit(stmt.cond())).append(" ").append(visit(stmt.thenBlock())));
+    }
+
+    @Override
+    public String visitDoWhileStmt(Stmt.DoWhileStmt stmt) {
+        return build(b -> b.append("do ").append(visit(stmt.doBlock())).append(" ").append(visit(stmt.cond())).append(";"));
+    }
+
+    @Override
+    public String visitForStmt(Stmt.ForStmt stmt) {
+        return build(b -> {
+            b.append("for ").append(String.join(", ", stmt.variables())).append(" in ")
+                    .append(visit(stmt.iterator())).append(" ").append(visit(stmt.body()));
+        });
+    }
+
+    @Override
+    public String visitReturnStmt(Stmt.ReturnStmt stmt) {
+        return "return" + stmt.expr().map(this::visit).map(s -> " " + s).orElse("") + ";";
+    }
+
+    @Override
+    public String visitLambdaExpr(Expr.LambdaExpr expr) {
+        return build(b -> {
+            b.append("fn(")
+                    .append(expr.parameters().stream().map(this::visit).collect(Collectors.joining(", ")))
+                    .append(") ").append(expr.body().map(this::visit, singleLine -> " = " + visit(singleLine)));
+        });
+    }
+
+    @Override
+    public String visitAssignExpr(Expr.AssignExpr expr) {
+        return build(b -> {
+            b.append(expr.modifiers().stream().map(Modifier::name).collect(Collectors.joining(" ")));
+            if (!expr.modifiers().isEmpty()) b.append(" ");
+            b.append(visit(expr.target()));
+            expr.type().ifPresent(type -> b.append(": ").append(visit(type)));
+            b.append(" = ").append(visit(expr.initializer()));
+        });
+    }
+
+    @Override
+    public String visitLiteralExpr(Expr.LiteralExpr expr) {
+        if (expr.value() instanceof List<?> list) {
+            return "[" + list.stream().map(this::toStringNodeCheck).collect(Collectors.joining(", ")) + "]";
+        }
+        if (expr.value() instanceof Map<?, ?> map) {
+            return "{" + map.entrySet().stream().map(e -> toStringNodeCheck(e.getKey()) + ": " + toStringNodeCheck(e.getValue())).collect(Collectors.joining(", ")) + "}";
+        }
+        return toStringNodeCheck(expr.value());
+    }
+
+    private String toStringNodeCheck(Object obj) {
+        return obj instanceof Node n ? visit(n) : String.valueOf(obj);
+    }
+
+    @Override
+    public String visitBinaryExpr(Expr.BinaryExpr expr) {
+        return visit(expr.left()) + expr.op().getValues().getFirst() + visit(expr.right());
+    }
+
+    @Override
+    public String visitUnaryExpr(Expr.UnaryExpr expr) {
+        return expr.op().getValues().getFirst() + visit(expr.expr());
+    }
+
+    @Override
+    public String visitCallExpr(Expr.CallExpr expr) {
+        return visit(expr.callee()) + "(" + expr.args().stream().map(this::visit).collect(Collectors.joining(", ")) + ")";
+    }
+
+    @Override
+    public String visitMemberAccessExpr(Expr.MemberAccessExpr expr) {
+        return visit(expr.object()) + "." + expr.member();
+    }
+
+    @Override
+    public String visitVarExpr(Expr.VarExpr expr) {
+        return expr.scopeSpecifier().name() + " " + expr.name();
+    }
+
+    @Override
+    public String visitParameterExpr(Expr.ParameterExpr expr) {
+        return build(b -> {
+            b.append(expr.name());
+            expr.type().ifPresent(type -> b.append(": ").append(visit(type)));
+            expr.defaultValue().ifPresent(value -> b.append(" = ").append(visit(value)));
+        });
+    }
+
+    @Override
+    public String visitArgumentExpr(Expr.ArgumentExpr expr) {
+        return build(b -> {
+            expr.name().ifPresent(name -> b.append(name).append(" = "));
+            b.append(visit(expr.value()));
+        });
+    }
+
+    @Override
+    public String visitIdentifierType(Expr.TypeExpr.IdentifierType expr) {
+        return expr.name();
+    }
+
+    @Override
+    public String visitUnionTypeExpr(Expr.TypeExpr.UnionTypeExpr expr) {
+        return expr.types().stream().map(this::visit).collect(Collectors.joining(" | "));
+    }
+
+    @Override
+    public String visitIntersectionTypeExpr(Expr.TypeExpr.IntersectionTypeExpr expr) {
+        return expr.types().stream().map(this::visit).collect(Collectors.joining(" & "));
+    }
+
+    @Override
+    public String visitNullableTypeExpr(Expr.TypeExpr.NullableTypeExpr expr) {
+        return visit(expr.type()) + "?";
+    }
+
+    @Override
+    public String visitTupleTypeExpr(Expr.TypeExpr.TupleTypeExpr expr) {
+        return "tuple<" + expr.types().stream().map(this::visit).collect(Collectors.joining(", ")) + ">";
+    }
+
+    @Override
+    public String visitListTypeExpr(Expr.TypeExpr.ListTypeExpr expr) {
+        return "list<" + visit(expr.type()) + ">";
+    }
+
+    @Override
+    public String visitMapTypeExpr(Expr.TypeExpr.MapTypeExpr expr) {
+        return "map<" + visit(expr.keyType()) + ", " + visit(expr.valueType()) + ">";
+    }
+
+    @Override
+    public String visitFunctionType(Expr.TypeExpr.FunctionType expr) {
+        return "(" + expr.params().stream().map(this::visit).collect(Collectors.joining(", ")) + ") -> " + visit(expr.returnType());
+    }
+
+    private static String build(Consumer<StringBuilder> consumer) {
+        StringBuilder builder = new StringBuilder();
+        consumer.accept(builder);
+        return builder.toString();
+    }
+}

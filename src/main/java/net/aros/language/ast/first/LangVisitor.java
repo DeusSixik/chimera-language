@@ -8,7 +8,6 @@ public interface LangVisitor<T> {
     T visitWhileStmt(Stmt.WhileStmt stmt);
     T visitDoWhileStmt(Stmt.DoWhileStmt stmt);
     T visitForStmt(Stmt.ForStmt stmt);
-//    T visitFnStmt(Stmt.FnStmt stmt);
     T visitReturnStmt(Stmt.ReturnStmt stmt);
     T visitLambdaExpr(Expr.LambdaExpr expr);
     T visitAssignExpr(Expr.AssignExpr expr);
@@ -20,6 +19,14 @@ public interface LangVisitor<T> {
     T visitVarExpr(Expr.VarExpr expr);
     T visitParameterExpr(Expr.ParameterExpr expr);
     T visitArgumentExpr(Expr.ArgumentExpr expr);
+    T visitIdentifierType(Expr.TypeExpr.IdentifierType expr);
+    T visitUnionTypeExpr(Expr.TypeExpr.UnionTypeExpr expr);
+    T visitIntersectionTypeExpr(Expr.TypeExpr.IntersectionTypeExpr expr);
+    T visitNullableTypeExpr(Expr.TypeExpr.NullableTypeExpr expr);
+    T visitTupleTypeExpr(Expr.TypeExpr.TupleTypeExpr expr);
+    T visitListTypeExpr(Expr.TypeExpr.ListTypeExpr expr);
+    T visitMapTypeExpr(Expr.TypeExpr.MapTypeExpr expr);
+    T visitFunctionType(Expr.TypeExpr.FunctionType expr);
 
     default T visit(Node node) {
         return switch (node) {
@@ -33,13 +40,20 @@ public interface LangVisitor<T> {
             case Expr.VarExpr expr -> visitVarExpr(expr);
             case Expr.ParameterExpr expr -> visitParameterExpr(expr);
             case Expr.ArgumentExpr expr -> visitArgumentExpr(expr);
+            case Expr.TypeExpr.IdentifierType expr -> visitIdentifierType(expr);
+            case Expr.TypeExpr.UnionTypeExpr expr -> visitUnionTypeExpr(expr);
+            case Expr.TypeExpr.IntersectionTypeExpr expr -> visitIntersectionTypeExpr(expr);
+            case Expr.TypeExpr.NullableTypeExpr expr -> visitNullableTypeExpr(expr);
+            case Expr.TypeExpr.TupleTypeExpr expr -> visitTupleTypeExpr(expr);
+            case Expr.TypeExpr.ListTypeExpr expr -> visitListTypeExpr(expr);
+            case Expr.TypeExpr.MapTypeExpr expr -> visitMapTypeExpr(expr);
+            case Expr.TypeExpr.FunctionType expr -> visitFunctionType(expr);
             case Stmt.ExprStmt stmt -> visitExprStmt(stmt);
             case Stmt.IfStmt stmt -> visitIfStmt(stmt);
             case Stmt.BlockStmt stmt -> visitBlockStmt(stmt);
             case Stmt.WhileStmt stmt -> visitWhileStmt(stmt);
             case Stmt.DoWhileStmt stmt -> visitDoWhileStmt(stmt);
             case Stmt.ForStmt stmt -> visitForStmt(stmt);
-//            case Stmt.FnStmt stmt -> visitFnStmt(stmt);
             case Stmt.ReturnStmt stmt -> visitReturnStmt(stmt);
             case Program program -> visitProgram(program);
         };

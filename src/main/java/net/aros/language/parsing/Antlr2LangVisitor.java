@@ -10,6 +10,7 @@ import net.aros.language.ast.first.Expr;
 import net.aros.language.ast.first.Node;
 import net.aros.language.ast.first.Program;
 import net.aros.language.ast.first.Stmt;
+import net.aros.language.ast.ops.AssignmentOp;
 import net.aros.language.ast.ops.BinaryOp;
 import net.aros.language.ast.ops.UnaryOp;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -46,36 +47,30 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     public Node visitFnStmt(LangParser.FnStmtContext ctx) {
         SourcePos pos = pos(ctx);
         return new Stmt.ExprStmt(new Expr.AssignExpr(
-                new Expr.AssignmentTarget(
-                        ctx.modifier().stream().map(this::mod).toList(),
-                        new Expr.VarExpr(
-                                ctx.scopeSpecifier() == null ? ScopeSpecifier.getDefault() : scopeSpecifier(ctx.scopeSpecifier()),
-                                ctx.Identifier(0).getText(),
-                                pos
-                        ),
-                        Optional.empty() // TODO: 10.05.2026 type != Identifier
+                ctx.modifier().stream().map(this::mod).toList(),
+                new Expr.VarExpr(
+                        ctx.scopeSpecifier() == null ? ScopeSpecifier.getDefault() : scopeSpecifier(ctx.scopeSpecifier()),
+                        ctx.Identifier().getText(),
+                        pos
                 ),
+                Optional.of(new Expr.TypeExpr.FunctionType(
+                        ctx.parameters().parameter().stream().map(p -> ((Expr.ParameterExpr) visit(p)).type().orElse(new Expr.TypeExpr.IdentifierType("any", pos(p)))).toList(),
+                        ctx.type() == null ? new Expr.TypeExpr.IdentifierType("any", pos(ctx.Colon().getSymbol())) : (Expr.TypeExpr) visit(ctx.type()),
+                        pos(ctx)
+                )),
                 new Expr.LambdaExpr(
                         ctx.parameters().parameter().stream().map(p -> (Expr.ParameterExpr) visit(p)).toList(),
-                        ctx.Identifier(1) == null ? Optional.empty() : Optional.of(ctx.Identifier(1).getText()),
+                        visitNullable(ctx.type(), Expr.TypeExpr.class),
                         ctx.block() == null ? Either.right((Expr) visit(ctx.expr())) : Either.left((Stmt.BlockStmt) visit(ctx.block())),
                         pos
                 ),
                 pos
         ), pos);
-//        return new Stmt.FnStmt(
-//                ctx.Identifier(0).getText(),
-//                ctx.parameters().parameter().stream().map(p -> (Expr.ParameterExpr) visit(p)).toList(),
-//                ctx.Identifier(1) == null ? Optional.empty() : Optional.of(ctx.Identifier(1).getText()),
-//                ctx.block() == null ? Either.right((Expr) visit(ctx.expr())) : Either.left((Stmt.BlockStmt) visit(ctx.block())),
-//                pos(ctx)
-//        );
     }
 
     @Override
     public Node visitParameter(LangParser.ParameterContext ctx) {
-        String type = ctx.Identifier(1) == null ? null : ctx.Identifier(1).getText();
-        return new Expr.ParameterExpr(ctx.Identifier(0).getText(), Optional.ofNullable(type), visitNullable(ctx.expr(), Expr.class), pos(ctx));
+        return new Expr.ParameterExpr(ctx.Identifier().getText(), visitNullable(ctx.type(), Expr.TypeExpr.class), visitNullable(ctx.expr(), Expr.class), pos(ctx));
     }
 
     @Override
@@ -179,7 +174,7 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     public Node visitLambda(LangParser.LambdaContext ctx) {
         return new Expr.LambdaExpr(
                 ctx.parameters().parameter().stream().map(p -> (Expr.ParameterExpr) visit(p)).toList(),
-                ctx.Identifier() == null ? Optional.empty() : Optional.of(ctx.Identifier().getText()),
+                visitNullable(ctx.type(), Expr.TypeExpr.class),
                 ctx.block() == null ? Either.right((Expr) visit(ctx.expr())) : Either.left((Stmt.BlockStmt) visit(ctx.block())), pos(ctx)
         );
     }
@@ -188,27 +183,30 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     public Node visitAssignment(LangParser.AssignmentContext ctx) {
         if (ctx.logicalOr() != null) return visit(ctx.logicalOr());
 
+        Expr target = buildPostfixExpr((Expr) visit(ctx.primary()), ctx.postfix());
+        Expr initializer = (Expr) visit(ctx.assignment());
+        BinaryOp op = AssignmentOp.opByValue(ctx.assignmentOperator().getText());
+        if (op != null) {
+            initializer = new Expr.BinaryExpr(target, op, initializer, pos(ctx));
+        }
+
         return new Expr.AssignExpr(
-            assignmentTarget(ctx.assignmentTarget()),
-            (Expr) visit(ctx.assignment()),
-            pos(ctx)
+                ctx.modifier().stream().map(this::mod).toList(),
+                target,
+                visitNullable(ctx.type(), Expr.TypeExpr.class),
+                initializer,
+                pos(ctx)
         );
     }
 
-    private Expr.AssignmentTarget assignmentTarget(LangParser.AssignmentTargetContext ctx) {
-        Expr expr = (Expr) visit(ctx.primary());
-        for (LangParser.PostfixContext postfix : ctx.postfix()) {
+    private Expr buildPostfixExpr(Expr expr, List<LangParser.PostfixContext> postfixes) {
+        for (LangParser.PostfixContext postfix : postfixes) {
             if (postfix.arguments() != null)
                 expr = new Expr.CallExpr(expr, postfix.arguments().argument().stream().map(arg -> (Expr.ArgumentExpr) visit(arg)).toList(), pos(postfix));
             else
                 expr = new Expr.MemberAccessExpr(expr, postfix.Identifier().getText(), pos(postfix));
         }
-
-        return new Expr.AssignmentTarget(
-                ctx.modifier().stream().map(this::mod).toList(),
-                expr,
-                ctx.Identifier() == null ? Optional.empty() : Optional.of(ctx.Identifier().getText())
-        );
+        return expr;
     }
 
     private Modifier mod(LangParser.ModifierContext mod) {
@@ -297,14 +295,7 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
 
     @Override
     public Node visitCall(LangParser.CallContext ctx) {
-        Expr expr = (Expr) visit(ctx.primary());
-        for (LangParser.PostfixContext postfix : ctx.postfix()) {
-            if (postfix.arguments() != null)
-                expr = new Expr.CallExpr(expr, postfix.arguments().argument().stream().map(e -> (Expr.ArgumentExpr) visit(e)).toList(), pos(postfix));
-            else
-                expr = new Expr.MemberAccessExpr(expr, postfix.Identifier().getText(), pos(postfix));
-        }
-        return expr;
+        return buildPostfixExpr((Expr) visit(ctx.primary()), ctx.postfix());
     }
 
     @Override
@@ -367,8 +358,11 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     }
 
     private static SourcePos pos(ParserRuleContext ctx) {
-        Token token = ctx.getStart();
-        return new SourcePos(token.getLine(), token.getCharPositionInLine());
+        return pos(ctx.getStart());
+    }
+
+    private static SourcePos pos(Token symbol) {
+        return new SourcePos(symbol.getLine(), symbol.getCharPositionInLine());
     }
 
     private Expr leftAssociative(ParserRuleContext ctx, int size, IntFunction<ParseTree> exprGetter) {
@@ -384,5 +378,68 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     private <T extends Node> Optional<T> visitNullable(ParseTree parseTree, Class<T> type) {
         if (parseTree == null) return Optional.empty();
         return Optional.of(type.cast(visit(parseTree)));
+    }
+
+    // TYPES
+
+    @Override
+    public Node visitType(LangParser.TypeContext ctx) {
+        return visit(ctx.unionType());
+    }
+
+    @Override
+    public Node visitUnionType(LangParser.UnionTypeContext ctx) {
+        if (ctx.intersectionType().size() == 1)
+            return visit(ctx.intersectionType(0));
+        return new Expr.TypeExpr.UnionTypeExpr(ctx.intersectionType().stream().map(intersection -> (Expr.TypeExpr) visit(intersection)).toList(), pos(ctx));
+    }
+
+    @Override
+    public Node visitIntersectionType(LangParser.IntersectionTypeContext ctx) {
+        if (ctx.postfixType().size() == 1)
+            return visit(ctx.postfixType(0));
+        return new Expr.TypeExpr.IntersectionTypeExpr(ctx.postfixType().stream().map(intersection -> (Expr.TypeExpr) visit(intersection)).toList(), pos(ctx));
+    }
+
+    @Override
+    public Node visitPostfixType(LangParser.PostfixTypeContext ctx) {
+        Expr.TypeExpr type = (Expr.TypeExpr) visit(ctx.primaryType());
+        return ctx.QuestionMark() != null ? new Expr.TypeExpr.NullableTypeExpr(type, pos(ctx)) : type;
+    }
+
+    @Override
+    public Node visitPrimaryType(LangParser.PrimaryTypeContext ctx) {
+        if (ctx.Identifier() != null) return new Expr.TypeExpr.IdentifierType(ctx.Identifier().getText(), pos(ctx));
+        if (ctx.tupleType() != null) return visit(ctx.tupleType());
+        if (ctx.listType() != null) return visit(ctx.listType());
+        if (ctx.mapType() != null) return visit(ctx.mapType());
+        if (ctx.functionType() != null) return visit(ctx.functionType());
+        return visit(ctx.type());
+    }
+
+    @Override
+    public Node visitTupleType(LangParser.TupleTypeContext ctx) {
+        return new Expr.TypeExpr.TupleTypeExpr(ctx.type().stream().map(t -> (Expr.TypeExpr) visit(t)).toList(), pos(ctx));
+    }
+
+    @Override
+    public Node visitListType(LangParser.ListTypeContext ctx) {
+        return new Expr.TypeExpr.ListTypeExpr((Expr.TypeExpr) visit(ctx.type()), pos(ctx));
+    }
+
+    @Override
+    public Node visitMapType(LangParser.MapTypeContext ctx) {
+        return new Expr.TypeExpr.MapTypeExpr((Expr.TypeExpr) visit(ctx.type(0)), (Expr.TypeExpr) visit(ctx.type(1)), pos(ctx));
+    }
+
+    @Override
+    public Node visitFunctionType(LangParser.FunctionTypeContext ctx) {
+        int size = ctx.type().size();
+        List<Expr.TypeExpr> types = ctx.type().stream().map(t -> (Expr.TypeExpr) visit(t)).toList();
+        return new Expr.TypeExpr.FunctionType(
+                size == 1 ? List.of() : types.subList(0, size - 2),
+                types.getLast(),
+                pos(ctx)
+        );
     }
 }

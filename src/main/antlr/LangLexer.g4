@@ -18,6 +18,9 @@ Fn                       : 'fn'         ;
 Return                   : 'return'     ;
 Const                    : 'const'      ;
 Gl                       : 'gl'         ;
+Tuple                    : 'tuple'      ;
+List                     : 'list'       ;
+Map                      : 'map'        ;
 
 // Symbols
 LParen                   : '('          ;
@@ -32,6 +35,7 @@ Comma                    : ','          ;
 Dot                      : '.'          ;
 QuestionMark             : '?'          ;
 At                       : '@'          ;
+RArrow                   : '->'         ;
 
 // Operators
 PlusAssign               : '+='         ;

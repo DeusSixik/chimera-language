@@ -25,7 +25,7 @@ exprStmt
     ;
 
 fnStmt
-    : scopeSpecifier? modifier* Fn Identifier LParen parameters RParen (Colon Identifier)? (block | (Assign expr))
+    : scopeSpecifier? modifier* Fn Identifier LParen parameters RParen (Colon type)? (block | (Assign expr))
     ;
 
 returnStmt
@@ -107,12 +107,8 @@ scopeSpecifier
     : Gl
     ;
 
-assignmentTarget
-    : scopeSpecifier? modifier* primary postfix* (Colon Identifier)?
-    ;
-
 assignment
-    : assignmentTarget assignmentOperator assignment
+    : scopeSpecifier? modifier* primary postfix* (Colon type)? assignmentOperator assignment
     | logicalOr
     ;
 
@@ -135,7 +131,7 @@ assignmentOperator
     ;
 
 lambda
-    : Fn LParen parameters RParen (Colon Identifier)? (block | (Assign expr))
+    : Fn LParen parameters RParen (Colon type)? (block | (Assign expr))
     ;
 
 logicalOr
@@ -218,7 +214,7 @@ parameters
     ;
 
 parameter
-    : Identifier (Colon Identifier)? (Assign expr)?
+    : Identifier (Colon type)? (Assign expr)?
     ;
 
 primary
@@ -240,4 +236,48 @@ listLiteral
 
 mapLiteral
     : LBrace ((expr Colon expr) (Comma (expr Colon expr))*)? RBrace
+    ;
+
+
+// Types
+
+type
+    : unionType
+    ;
+
+unionType
+    : intersectionType (BitOr intersectionType)*
+    ;
+
+intersectionType
+    : postfixType (BitAnd postfixType)*
+    ;
+
+postfixType
+    : primaryType QuestionMark?
+    ;
+
+primaryType
+    : Identifier
+    | tupleType
+    | functionType
+    | listType
+    | mapType
+    | LParen type RParen
+    ;
+
+functionType
+    : LParen (type (Comma type)*)? RParen RArrow type
+    ;
+
+tupleType
+    : Tuple Less type (Comma type)* Greater // at least one
+    ;
+
+listType
+    : List Less type Greater
+    ;
+
+mapType
+    : Map Less type Comma type Greater
     ;

@@ -11,21 +11,25 @@ import java.util.List;
 import java.util.Optional;
 
 public sealed interface Expr extends Node {
-    record LambdaExpr(List<ParameterExpr> parameters, Optional<String> returnType, Either<Stmt.BlockStmt, Expr> body, SourcePos pos) implements Expr {}
-    record AssignExpr(AssignmentTarget target, Expr initializer, SourcePos pos) implements Expr {}
+    record LambdaExpr(List<ParameterExpr> parameters, Optional<TypeExpr> returnType, Either<Stmt.BlockStmt, Expr> body, SourcePos pos) implements Expr {}
+    record AssignExpr(List<Modifier> modifiers, Expr target, Optional<TypeExpr> type, Expr initializer, SourcePos pos) implements Expr {}
     record LiteralExpr(Object value, SourcePos pos) implements Expr {}
     record BinaryExpr(Expr left, BinaryOp op, Expr right, SourcePos pos) implements Expr {}
     record UnaryExpr(UnaryOp op, Expr expr, SourcePos pos) implements Expr {}
     record CallExpr(Expr callee, List<ArgumentExpr> args, SourcePos pos) implements Expr {}
     record MemberAccessExpr(Expr object, String member, SourcePos pos) implements Expr {}
     record VarExpr(ScopeSpecifier scopeSpecifier, String name, SourcePos pos) implements Expr {}
-    record ParameterExpr(String name, Optional<String> type, Optional<Expr> defaultValue, SourcePos pos) implements Expr {}
+    record ParameterExpr(String name, Optional<TypeExpr> type, Optional<Expr> defaultValue, SourcePos pos) implements Expr {}
     record ArgumentExpr(Optional<String> name, Expr value, SourcePos pos) implements Expr {}
 
-    record AssignmentTarget(
-            List<Modifier> modifiers,
-            Expr target,
-            Optional<String> type
-    ) {
+    sealed interface TypeExpr extends Expr {
+        record IdentifierType(String name, SourcePos pos) implements TypeExpr {}
+        record UnionTypeExpr(List<TypeExpr> types, SourcePos pos) implements TypeExpr {}
+        record IntersectionTypeExpr(List<TypeExpr> types, SourcePos pos) implements TypeExpr {}
+        record NullableTypeExpr(TypeExpr type, SourcePos pos) implements TypeExpr {}
+        record TupleTypeExpr(List<TypeExpr> types, SourcePos pos) implements TypeExpr {}
+        record ListTypeExpr(TypeExpr type, SourcePos pos) implements TypeExpr {}
+        record MapTypeExpr(TypeExpr keyType, TypeExpr valueType, SourcePos pos) implements TypeExpr {}
+        record FunctionType(List<TypeExpr> params, TypeExpr returnType, SourcePos pos) implements TypeExpr {}
     }
 }
