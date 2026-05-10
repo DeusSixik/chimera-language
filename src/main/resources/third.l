@@ -1,1 +1,34 @@
-const @b: int = 20;
+const GOLDEN_RATIO_64 = -7046029254386353131;
+const SILVER_RATIO_64 = 7640891576956012809;
+
+
+fn mixStafford13(seed: int): int {
+	seed = (seed ^ (seed >> 30)) * -4658895280553007687;
+	seed = (seed ^ (seed >> 27)) * -7723592293110705685;
+	return seed ^ (seed >> 31);
+}
+
+fn generateUniqueSeed(): int {
+	return mth.atomicUpdateAndGet(SEED_UNIQUIFIER, seed=1181783497276652981, newValue=0, time=std.now());
+}
+
+fn xorOther(self: Seed128bit, other: Seed128bit): Seed128bit {
+	return other.seedLo xor other.seedHi;
+}
+fn hashCode(self: HashedString): int {
+    h: int = self.hash;
+    if (h == 0 && !self.hash_is_zero) {
+        for c in self.str {
+            h = h * 31 + c;
+        }
+        if h == 0 {
+            self.hash_is_zero = true;
+        } else {
+            self.hash = h;
+        }
+    }
+    last = {
+        "key": gl valueVar.param.next.next.seca()
+    };
+    return h;
+}

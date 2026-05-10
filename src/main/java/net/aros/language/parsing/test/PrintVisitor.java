@@ -1,5 +1,6 @@
 package net.aros.language.parsing.test;
 
+import net.aros.language.ast.ScopeSpecifier;
 import net.aros.language.ast.first.Expr;
 import net.aros.language.ast.first.LangVisitor;
 import net.aros.language.ast.first.Program;
@@ -64,15 +65,15 @@ public class PrintVisitor implements LangVisitor<Void> {
         return null;
     }
 
-    @Override
-    public Void visitFnStmt(Stmt.FnStmt stmt) {
-        builder.append("fn " + stmt.name() + "(" + String.join(", ", stmt.parameters().stream().map(e -> "%s: %s = %s".formatted(
-                e.name(), e.type().isEmpty() ? "null" : e.type().get(), e.defaultValue().isEmpty() ? "null" : "<expr>"
-        )).toList()) + ") ");
-        visit(stmt.body().isLeft() ? stmt.body().left().get() : stmt.body().right().get());
-
-        return null;
-    }
+//    @Override
+//    public Void visitFnStmt(Stmt.FnStmt stmt) {
+//        builder.append("fn " + stmt.name() + "(" + String.join(", ", stmt.parameters().stream().map(e -> "%s: %s = %s".formatted(
+//                e.name(), e.type().isEmpty() ? "null" : e.type().get(), e.defaultValue().isEmpty() ? "null" : "<expr>"
+//        )).toList()) + ") ");
+//        visit(stmt.body().isLeft() ? stmt.body().left().get() : stmt.body().right().get());
+//
+//        return null;
+//    }
 
     @Override
     public Void visitReturnStmt(Stmt.ReturnStmt stmt) {
@@ -93,7 +94,14 @@ public class PrintVisitor implements LangVisitor<Void> {
 
     @Override
     public Void visitAssignExpr(Expr.AssignExpr expr) {
-        builder.append(expr.variable() + ": " + (expr.typeName().isEmpty() ? "?" : expr.typeName().get()) + " = ");
+        expr.target().modifiers().forEach(mod -> {
+            builder.append(mod.name()).append(" ");
+        });
+        visit(expr.target().target());
+        expr.target().type().ifPresent(type -> {
+            builder.append(": ").append(type);
+        });
+        builder.append(" = ");
         visit(expr.initializer());
 
         return null;
@@ -138,6 +146,8 @@ public class PrintVisitor implements LangVisitor<Void> {
 
     @Override
     public Void visitVarExpr(Expr.VarExpr expr) {
+        if (expr.scopeSpecifier() != ScopeSpecifier.getDefault())
+            builder.append(expr.scopeSpecifier().name()).append(" ");
         builder.append("`" + expr.name() + "`");
 
         return null;
@@ -145,14 +155,21 @@ public class PrintVisitor implements LangVisitor<Void> {
 
     @Override
     public Void visitArgumentExpr(Expr.ArgumentExpr expr) {
-        builder.append(expr.name() + " = ");
-        expr.value().ifPresent(this::visit);
+        expr.name().ifPresent(name -> builder.append(name).append(" = "));
+        visit(expr.value());
         return null;
     }
 
     @Override
     public Void visitParameterExpr(Expr.ParameterExpr expr) {
         builder.append("param");
+        return null;
+    }
+
+    @Override
+    public Void visitMemberAccessExpr(Expr.MemberAccessExpr expr) {
+        visit(expr.object());
+        builder.append(".").append(expr.member());
         return null;
     }
 

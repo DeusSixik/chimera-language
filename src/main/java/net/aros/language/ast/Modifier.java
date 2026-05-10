@@ -1,5 +1,5 @@
 package net.aros.language.ast;
 
-public enum VarModifier {
+public enum Modifier {
     CONST, STATIC
 }

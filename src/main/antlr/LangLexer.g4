@@ -17,6 +17,7 @@ Do                       : 'do'         ;
 Fn                       : 'fn'         ;
 Return                   : 'return'     ;
 Const                    : 'const'      ;
+Gl                       : 'gl'         ;
 
 // Symbols
 LParen                   : '('          ;

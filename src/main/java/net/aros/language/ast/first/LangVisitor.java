@@ -8,7 +8,7 @@ public interface LangVisitor<T> {
     T visitWhileStmt(Stmt.WhileStmt stmt);
     T visitDoWhileStmt(Stmt.DoWhileStmt stmt);
     T visitForStmt(Stmt.ForStmt stmt);
-    T visitFnStmt(Stmt.FnStmt stmt);
+//    T visitFnStmt(Stmt.FnStmt stmt);
     T visitReturnStmt(Stmt.ReturnStmt stmt);
     T visitLambdaExpr(Expr.LambdaExpr expr);
     T visitAssignExpr(Expr.AssignExpr expr);
@@ -16,6 +16,7 @@ public interface LangVisitor<T> {
     T visitBinaryExpr(Expr.BinaryExpr expr);
     T visitUnaryExpr(Expr.UnaryExpr expr);
     T visitCallExpr(Expr.CallExpr expr);
+    T visitMemberAccessExpr(Expr.MemberAccessExpr expr);
     T visitVarExpr(Expr.VarExpr expr);
     T visitParameterExpr(Expr.ParameterExpr expr);
     T visitArgumentExpr(Expr.ArgumentExpr expr);
@@ -28,6 +29,7 @@ public interface LangVisitor<T> {
             case Expr.BinaryExpr expr -> visitBinaryExpr(expr);
             case Expr.UnaryExpr expr -> visitUnaryExpr(expr);
             case Expr.CallExpr expr -> visitCallExpr(expr);
+            case Expr.MemberAccessExpr expr -> visitMemberAccessExpr(expr);
             case Expr.VarExpr expr -> visitVarExpr(expr);
             case Expr.ParameterExpr expr -> visitParameterExpr(expr);
             case Expr.ArgumentExpr expr -> visitArgumentExpr(expr);
@@ -37,7 +39,7 @@ public interface LangVisitor<T> {
             case Stmt.WhileStmt stmt -> visitWhileStmt(stmt);
             case Stmt.DoWhileStmt stmt -> visitDoWhileStmt(stmt);
             case Stmt.ForStmt stmt -> visitForStmt(stmt);
-            case Stmt.FnStmt stmt -> visitFnStmt(stmt);
+//            case Stmt.FnStmt stmt -> visitFnStmt(stmt);
             case Stmt.ReturnStmt stmt -> visitReturnStmt(stmt);
             case Program program -> visitProgram(program);
         };
