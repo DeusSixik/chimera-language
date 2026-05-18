@@ -1,10 +1,10 @@
-package net.aros.language.ast.first;
+package net.aros.chimera.ast.first;
 
-import net.aros.language.ast.Either;
-import net.aros.language.ast.SourcePos;
-import net.aros.language.ast.Modifier;
-import net.aros.language.ast.ops.BinaryOp;
-import net.aros.language.ast.ops.UnaryOp;
+import net.aros.chimera.ast.Either;
+import net.aros.chimera.ast.SourcePos;
+import net.aros.chimera.ast.Modifier;
+import net.aros.chimera.ast.ops.BinaryOp;
+import net.aros.chimera.ast.ops.UnaryOp;
 
 import java.util.List;
 import java.util.Optional;

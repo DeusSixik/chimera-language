@@ -1,6 +1,6 @@
-package net.aros.language.ast.first;
+package net.aros.chimera.ast.first;
 
-public interface LangVisitor<T> {
+public interface ChiVisitor<T> {
     T visitProgram(Program program);
     T visitExprStmt(Stmt.ExprStmt stmt);
     T visitIfStmt(Stmt.IfStmt stmt);

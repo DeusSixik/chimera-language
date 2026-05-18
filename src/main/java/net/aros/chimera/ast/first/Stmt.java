@@ -1,6 +1,6 @@
-package net.aros.language.ast.first;
+package net.aros.chimera.ast.first;
 
-import net.aros.language.ast.SourcePos;
+import net.aros.chimera.ast.SourcePos;
 
 import java.util.List;
 import java.util.Optional;

@@ -1,1 +1,1 @@
-rootProject.name = "the-computer-language-j"
+rootProject.name = "chimera-language"

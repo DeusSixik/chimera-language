@@ -3,7 +3,7 @@ plugins {
     id("antlr")
 }
 
-group = "net.aros.language"
+group = "net.aros.chimera"
 version = "1.0-SNAPSHOT"
 
 repositories {

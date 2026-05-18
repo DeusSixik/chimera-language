@@ -1,7 +1,7 @@
-lexer grammar LangLexer;
+lexer grammar ChimeraLexer;
 
 @header {
-package net.aros.language;
+package net.aros.chimera;
 }
 
 // Keywords

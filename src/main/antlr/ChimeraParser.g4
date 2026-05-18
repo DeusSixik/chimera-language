@@ -1,10 +1,10 @@
-parser grammar LangParser;
+parser grammar ChimeraParser;
 
 @header {
-package net.aros.language;
+package net.aros.chimera;
 }
 
-options { tokenVocab=LangLexer; }
+options { tokenVocab=ChimeraLexer; }
 
 program
     : stmt* EOF

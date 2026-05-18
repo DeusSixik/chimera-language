@@ -1,8 +1,7 @@
-package net.aros.language.ast.ops;
+package net.aros.chimera.ast.ops;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.SequencedCollection;
 
 public enum BinaryOp {
     BITWISE_OR("|"),

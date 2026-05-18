@@ -1,14 +1,14 @@
-package net.aros.language.parsing.test;
+package net.aros.chimera.parsing.test;
 
-import net.aros.language.ast.Modifier;
-import net.aros.language.ast.first.*;
+import net.aros.chimera.ast.Modifier;
+import net.aros.chimera.ast.first.*;
 
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class Ast2PseudoCodeVisitor implements LangVisitor<String> {
+public class Ast2PseudoCodeVisitor implements ChiVisitor<String> {
     @Override
     public String visitProgram(Program program) {
         return build(b -> {

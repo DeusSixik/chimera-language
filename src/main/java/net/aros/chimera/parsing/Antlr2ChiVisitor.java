@@ -1,17 +1,17 @@
-package net.aros.language.parsing;
+package net.aros.chimera.parsing;
 
-import net.aros.language.LangParser;
-import net.aros.language.LangParserBaseVisitor;
-import net.aros.language.ast.Either;
-import net.aros.language.ast.SourcePos;
-import net.aros.language.ast.Modifier;
-import net.aros.language.ast.first.Expr;
-import net.aros.language.ast.first.Node;
-import net.aros.language.ast.first.Program;
-import net.aros.language.ast.first.Stmt;
-import net.aros.language.ast.ops.AssignmentOp;
-import net.aros.language.ast.ops.BinaryOp;
-import net.aros.language.ast.ops.UnaryOp;
+import net.aros.chimera.ChimeraParser;
+import net.aros.chimera.ChimeraParserBaseVisitor;
+import net.aros.chimera.ast.Either;
+import net.aros.chimera.ast.SourcePos;
+import net.aros.chimera.ast.Modifier;
+import net.aros.chimera.ast.first.Expr;
+import net.aros.chimera.ast.first.Node;
+import net.aros.chimera.ast.first.Program;
+import net.aros.chimera.ast.first.Stmt;
+import net.aros.chimera.ast.ops.AssignmentOp;
+import net.aros.chimera.ast.ops.BinaryOp;
+import net.aros.chimera.ast.ops.UnaryOp;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -24,14 +24,14 @@ import java.util.function.IntFunction;
 
 import static com.ibm.icu.impl.Utility.unescape;
 
-public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
+public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
     @Override
-    public Node visitProgram(LangParser.ProgramContext ctx) {
+    public Node visitProgram(ChimeraParser.ProgramContext ctx) {
         return new Program(ctx.stmt().stream().map(s -> (Stmt) visit(s)).toList());
     }
 
     @Override
-    public Node visitStmt(LangParser.StmtContext ctx) {
+    public Node visitStmt(ChimeraParser.StmtContext ctx) {
         if (ctx.ifStmt() != null) return visit(ctx.ifStmt());
         if (ctx.doWhileStmt() != null) return visit(ctx.doWhileStmt());
         if (ctx.whileStmt() != null) return visit(ctx.whileStmt());
@@ -43,7 +43,7 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitFnStmt(LangParser.FnStmtContext ctx) {
+    public Node visitFnStmt(ChimeraParser.FnStmtContext ctx) {
         SourcePos pos = pos(ctx);
         return new Stmt.ExprStmt(new Expr.AssignExpr(
                 ctx.modifier().stream().map(this::mod).toList(),
@@ -64,22 +64,22 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitParameter(LangParser.ParameterContext ctx) {
+    public Node visitParameter(ChimeraParser.ParameterContext ctx) {
         return new Expr.ParameterExpr(ctx.Identifier().getText(), visitNullable(ctx.type(), Expr.TypeExpr.class), visitNullable(ctx.expr(), Expr.class), pos(ctx));
     }
 
     @Override
-    public Node visitReturnStmt(LangParser.ReturnStmtContext ctx) {
+    public Node visitReturnStmt(ChimeraParser.ReturnStmtContext ctx) {
         return new Stmt.ReturnStmt(visitNullable(ctx.expr(), Expr.class), pos(ctx));
     }
 
     @Override
-    public Node visitExprStmt(LangParser.ExprStmtContext ctx) {
+    public Node visitExprStmt(ChimeraParser.ExprStmtContext ctx) {
         return new Stmt.ExprStmt((Expr) visit(ctx.expr()), pos(ctx));
     }
 
     @Override
-    public Node visitIfStmt(LangParser.IfStmtContext ctx) {
+    public Node visitIfStmt(ChimeraParser.IfStmtContext ctx) {
         if (ctx.parenIfStmt() != null) return visit(ctx.parenIfStmt());
         if (ctx.parenlessIfStmt() != null) return visit(ctx.parenlessIfStmt());
 
@@ -87,17 +87,17 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitParenIfStmt(LangParser.ParenIfStmtContext ctx) {
+    public Node visitParenIfStmt(ChimeraParser.ParenIfStmtContext ctx) {
         return new Stmt.IfStmt((Expr) visit(ctx.expr()), (Stmt) visit(ctx.blockOrStmt(0)), visitNullable(ctx.blockOrStmt(1), Stmt.class), pos(ctx));
     }
 
     @Override
-    public Node visitParenlessIfStmt(LangParser.ParenlessIfStmtContext ctx) {
+    public Node visitParenlessIfStmt(ChimeraParser.ParenlessIfStmtContext ctx) {
         return new Stmt.IfStmt((Expr) visit(ctx.expr()), (Stmt) visit(ctx.blockOrStmt(0)), visitNullable(ctx.blockOrStmt(1), Stmt.class), pos(ctx));
     }
 
     @Override
-    public Node visitForStmt(LangParser.ForStmtContext ctx) {
+    public Node visitForStmt(ChimeraParser.ForStmtContext ctx) {
         if (ctx.parenForStmt() != null) return visit(ctx.parenForStmt());
         if (ctx.parenlessForStmt() != null) return visit(ctx.parenlessForStmt());
 
@@ -105,7 +105,7 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitParenForStmt(LangParser.ParenForStmtContext ctx) {
+    public Node visitParenForStmt(ChimeraParser.ParenForStmtContext ctx) {
         return new Stmt.ForStmt(
                 ctx.Identifier().stream().map(TerminalNode::getText).toList(),
                 (Expr) visit(ctx.expr()),
@@ -115,7 +115,7 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitParenlessForStmt(LangParser.ParenlessForStmtContext ctx) {
+    public Node visitParenlessForStmt(ChimeraParser.ParenlessForStmtContext ctx) {
         return new Stmt.ForStmt(
                 ctx.Identifier().stream().map(TerminalNode::getText).toList(),
                 (Expr) visit(ctx.expr()),
@@ -125,7 +125,7 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitDoWhileStmt(LangParser.DoWhileStmtContext ctx) {
+    public Node visitDoWhileStmt(ChimeraParser.DoWhileStmtContext ctx) {
         if (ctx.parenDoWhileStmt() != null) return visit(ctx.parenDoWhileStmt());
         if (ctx.parenlessDoWhileStmt() != null) return visit(ctx.parenlessDoWhileStmt());
 
@@ -133,17 +133,17 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitParenDoWhileStmt(LangParser.ParenDoWhileStmtContext ctx) {
+    public Node visitParenDoWhileStmt(ChimeraParser.ParenDoWhileStmtContext ctx) {
         return new Stmt.DoWhileStmt((Stmt.BlockStmt) visit(ctx.block()), (Expr) visit(ctx.expr()), pos(ctx));
     }
 
     @Override
-    public Node visitParenlessDoWhileStmt(LangParser.ParenlessDoWhileStmtContext ctx) {
+    public Node visitParenlessDoWhileStmt(ChimeraParser.ParenlessDoWhileStmtContext ctx) {
         return new Stmt.DoWhileStmt((Stmt.BlockStmt) visit(ctx.block()), (Expr) visit(ctx.expr()), pos(ctx));
     }
 
     @Override
-    public Node visitWhileStmt(LangParser.WhileStmtContext ctx) {
+    public Node visitWhileStmt(ChimeraParser.WhileStmtContext ctx) {
         if (ctx.parenWhileStmt() != null) return visit(ctx.parenWhileStmt());
         if (ctx.parenlessWhileStmt() != null) return visit(ctx.parenlessWhileStmt());
 
@@ -151,22 +151,22 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitParenWhileStmt(LangParser.ParenWhileStmtContext ctx) {
+    public Node visitParenWhileStmt(ChimeraParser.ParenWhileStmtContext ctx) {
         return new Stmt.WhileStmt((Expr) visit(ctx.expr()), (Stmt.BlockStmt) visit(ctx.block()), pos(ctx));
     }
 
     @Override
-    public Node visitParenlessWhileStmt(LangParser.ParenlessWhileStmtContext ctx) {
+    public Node visitParenlessWhileStmt(ChimeraParser.ParenlessWhileStmtContext ctx) {
         return new Stmt.WhileStmt((Expr) visit(ctx.expr()), (Stmt.BlockStmt) visit(ctx.block()), pos(ctx));
     }
 
     @Override
-    public Node visitBlock(LangParser.BlockContext ctx) {
+    public Node visitBlock(ChimeraParser.BlockContext ctx) {
         return new Stmt.BlockStmt(ctx.stmt().stream().map(s -> (Stmt) visit(s)).toList(), pos(ctx));
     }
 
     @Override
-    public Node visitLambda(LangParser.LambdaContext ctx) {
+    public Node visitLambda(ChimeraParser.LambdaContext ctx) {
         return new Expr.LambdaExpr(
                 ctx.parameters().parameter().stream().map(p -> (Expr.ParameterExpr) visit(p)).toList(),
                 visitNullable(ctx.type(), Expr.TypeExpr.class),
@@ -175,7 +175,7 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitAssignment(LangParser.AssignmentContext ctx) {
+    public Node visitAssignment(ChimeraParser.AssignmentContext ctx) {
         if (ctx.logicalOr() != null) return visit(ctx.logicalOr());
 
         Expr target = buildPostfixExpr((Expr) visit(ctx.primary()), ctx.postfix());
@@ -194,8 +194,8 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
         );
     }
 
-    private Expr buildPostfixExpr(Expr expr, List<LangParser.PostfixContext> postfixes) {
-        for (LangParser.PostfixContext postfix : postfixes) {
+    private Expr buildPostfixExpr(Expr expr, List<ChimeraParser.PostfixContext> postfixes) {
+        for (ChimeraParser.PostfixContext postfix : postfixes) {
             if (postfix.arguments() != null)
                 expr = new Expr.CallExpr(expr, postfix.arguments().argument().stream().map(arg -> (Expr.ArgumentExpr) visit(arg)).toList(), pos(postfix));
             else
@@ -204,79 +204,79 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
         return expr;
     }
 
-    private Modifier mod(LangParser.ModifierContext mod) {
+    private Modifier mod(ChimeraParser.ModifierContext mod) {
         if (mod.Const() != null) return Modifier.CONST;
         if (mod.At() != null) return Modifier.STATIC;
         throw new IllegalArgumentException("Unknown mod");
     }
 
     @Override
-    public Node visitNamedArgument(LangParser.NamedArgumentContext ctx) {
+    public Node visitNamedArgument(ChimeraParser.NamedArgumentContext ctx) {
         return new Expr.ArgumentExpr(Optional.of(ctx.Identifier().getText()), (Expr) visit(ctx.expr()), pos(ctx));
     }
 
     @Override
-    public Node visitPositionalArgument(LangParser.PositionalArgumentContext ctx) {
+    public Node visitPositionalArgument(ChimeraParser.PositionalArgumentContext ctx) {
         return new Expr.ArgumentExpr(Optional.empty(), (Expr) visit(ctx.expr()), pos(ctx));
     }
 
     @Override
-    public Node visitLogicalOr(LangParser.LogicalOrContext ctx) {
+    public Node visitLogicalOr(ChimeraParser.LogicalOrContext ctx) {
         return leftAssociative(ctx, ctx.logicalXor().size(), ctx::logicalXor);
     }
 
     @Override
-    public Node visitLogicalXor(LangParser.LogicalXorContext ctx) {
+    public Node visitLogicalXor(ChimeraParser.LogicalXorContext ctx) {
         return leftAssociative(ctx, ctx.logicalAnd().size(), ctx::logicalAnd);
     }
 
     @Override
-    public Node visitLogicalAnd(LangParser.LogicalAndContext ctx) {
+    public Node visitLogicalAnd(ChimeraParser.LogicalAndContext ctx) {
         return leftAssociative(ctx, ctx.bitwiseOr().size(), ctx::bitwiseOr);
     }
 
     @Override
-    public Node visitBitwiseOr(LangParser.BitwiseOrContext ctx) {
+    public Node visitBitwiseOr(ChimeraParser.BitwiseOrContext ctx) {
         return leftAssociative(ctx, ctx.bitwiseXor().size(), ctx::bitwiseXor);
     }
 
     @Override
-    public Node visitBitwiseXor(LangParser.BitwiseXorContext ctx) {
+    public Node visitBitwiseXor(ChimeraParser.BitwiseXorContext ctx) {
         return leftAssociative(ctx, ctx.bitwiseAnd().size(), ctx::bitwiseAnd);
     }
 
     @Override
-    public Node visitBitwiseAnd(LangParser.BitwiseAndContext ctx) {
+    public Node visitBitwiseAnd(ChimeraParser.BitwiseAndContext ctx) {
         return leftAssociative(ctx, ctx.equality().size(), ctx::equality);
     }
 
     @Override
-    public Node visitEquality(LangParser.EqualityContext ctx) {
+    public Node visitEquality(ChimeraParser.EqualityContext ctx) {
         return leftAssociative(ctx, ctx.comparison().size(), ctx::comparison);
     }
 
     @Override
-    public Node visitComparison(LangParser.ComparisonContext ctx) {
+    public Node visitComparison(ChimeraParser.ComparisonContext ctx) {
         return leftAssociative(ctx, ctx.shift().size(), ctx::shift);
     }
 
     @Override
-    public Node visitShift(LangParser.ShiftContext ctx) {
+    public Node visitShift(ChimeraParser.ShiftContext ctx) {
         return leftAssociative(ctx, ctx.term().size(), ctx::term);
     }
 
     @Override
-    public Node visitTerm(LangParser.TermContext ctx) {
+    public Node visitTerm(ChimeraParser.TermContext ctx) {
         return leftAssociative(ctx, ctx.factor().size(), ctx::factor);
     }
 
     @Override
-    public Node visitFactor(LangParser.FactorContext ctx) {
+    public Node visitFactor(ChimeraParser.FactorContext ctx) {
         return leftAssociative(ctx, ctx.unary().size(), ctx::unary);
     }
 
     @Override
-    public Node visitUnary(LangParser.UnaryContext ctx) {
+    public Node visitUnary(ChimeraParser.UnaryContext ctx) {
         if (ctx.call() != null) return visit(ctx.call());
         var op = UnaryOp.byValue(ctx.getChild(0).getText());
         Expr right = (Expr) visit(ctx.unary());
@@ -284,17 +284,17 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitCall(LangParser.CallContext ctx) {
+    public Node visitCall(ChimeraParser.CallContext ctx) {
         return buildPostfixExpr((Expr) visit(ctx.primary()), ctx.postfix());
     }
 
     @Override
-    public Node visitListLiteral(LangParser.ListLiteralContext ctx) {
+    public Node visitListLiteral(ChimeraParser.ListLiteralContext ctx) {
         return new Expr.LiteralExpr(ctx.expr().stream().map(this::visit).toList(), pos(ctx));
     }
 
     @Override
-    public Node visitMapLiteral(LangParser.MapLiteralContext ctx) {
+    public Node visitMapLiteral(ChimeraParser.MapLiteralContext ctx) {
         Map<Node, Node> map = new HashMap<>();
         for (int i = 0; i < ctx.Colon().size(); i++) {
             map.put(visit(ctx.expr(i)), visit(ctx.expr(i + 1)));
@@ -303,7 +303,7 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitPrimary(LangParser.PrimaryContext ctx) {
+    public Node visitPrimary(ChimeraParser.PrimaryContext ctx) {
         if (ctx.IntLiteral() != null) return new Expr.LiteralExpr(new BigInteger(ctx.IntLiteral().getText()), pos(ctx));
         if (ctx.FloatLiteral() != null)
             return new Expr.LiteralExpr(new BigDecimal(ctx.FloatLiteral().getText()), pos(ctx));
@@ -326,14 +326,14 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitArgument(LangParser.ArgumentContext ctx) {
+    public Node visitArgument(ChimeraParser.ArgumentContext ctx) {
         if (ctx.positionalArgument() != null) return visit(ctx.positionalArgument());
         if (ctx.namedArgument() != null) return visit(ctx.namedArgument());
         throw new IllegalArgumentException("Unknown argument");
     }
 
     @Override
-    public Node visitExpr(LangParser.ExprContext ctx) {
+    public Node visitExpr(ChimeraParser.ExprContext ctx) {
         if (ctx.assignment() != null) return visit(ctx.assignment());
         if (ctx.lambda() != null) return visit(ctx.lambda());
 
@@ -341,7 +341,7 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitBlockOrStmt(LangParser.BlockOrStmtContext ctx) {
+    public Node visitBlockOrStmt(ChimeraParser.BlockOrStmtContext ctx) {
         if (ctx.block() != null) return visit(ctx.block());
         return visit(ctx.stmt());
     }
@@ -372,32 +372,32 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     // TYPES
 
     @Override
-    public Node visitType(LangParser.TypeContext ctx) {
+    public Node visitType(ChimeraParser.TypeContext ctx) {
         return visit(ctx.unionType());
     }
 
     @Override
-    public Node visitUnionType(LangParser.UnionTypeContext ctx) {
+    public Node visitUnionType(ChimeraParser.UnionTypeContext ctx) {
         if (ctx.intersectionType().size() == 1)
             return visit(ctx.intersectionType(0));
         return new Expr.TypeExpr.UnionTypeExpr(ctx.intersectionType().stream().map(intersection -> (Expr.TypeExpr) visit(intersection)).toList(), pos(ctx));
     }
 
     @Override
-    public Node visitIntersectionType(LangParser.IntersectionTypeContext ctx) {
+    public Node visitIntersectionType(ChimeraParser.IntersectionTypeContext ctx) {
         if (ctx.postfixType().size() == 1)
             return visit(ctx.postfixType(0));
         return new Expr.TypeExpr.IntersectionTypeExpr(ctx.postfixType().stream().map(intersection -> (Expr.TypeExpr) visit(intersection)).toList(), pos(ctx));
     }
 
     @Override
-    public Node visitPostfixType(LangParser.PostfixTypeContext ctx) {
+    public Node visitPostfixType(ChimeraParser.PostfixTypeContext ctx) {
         Expr.TypeExpr type = (Expr.TypeExpr) visit(ctx.primaryType());
         return ctx.QuestionMark() != null ? new Expr.TypeExpr.NullableTypeExpr(type, pos(ctx)) : type;
     }
 
     @Override
-    public Node visitPrimaryType(LangParser.PrimaryTypeContext ctx) {
+    public Node visitPrimaryType(ChimeraParser.PrimaryTypeContext ctx) {
         if (ctx.Identifier() != null) return new Expr.TypeExpr.IdentifierType(ctx.Identifier().getText(), pos(ctx));
         if (ctx.tupleType() != null) return visit(ctx.tupleType());
         if (ctx.listType() != null) return visit(ctx.listType());
@@ -407,22 +407,22 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitTupleType(LangParser.TupleTypeContext ctx) {
+    public Node visitTupleType(ChimeraParser.TupleTypeContext ctx) {
         return new Expr.TypeExpr.TupleTypeExpr(ctx.type().stream().map(t -> (Expr.TypeExpr) visit(t)).toList(), pos(ctx));
     }
 
     @Override
-    public Node visitListType(LangParser.ListTypeContext ctx) {
+    public Node visitListType(ChimeraParser.ListTypeContext ctx) {
         return new Expr.TypeExpr.ListTypeExpr((Expr.TypeExpr) visit(ctx.type()), pos(ctx));
     }
 
     @Override
-    public Node visitMapType(LangParser.MapTypeContext ctx) {
+    public Node visitMapType(ChimeraParser.MapTypeContext ctx) {
         return new Expr.TypeExpr.MapTypeExpr((Expr.TypeExpr) visit(ctx.type(0)), (Expr.TypeExpr) visit(ctx.type(1)), pos(ctx));
     }
 
     @Override
-    public Node visitFunctionType(LangParser.FunctionTypeContext ctx) {
+    public Node visitFunctionType(ChimeraParser.FunctionTypeContext ctx) {
         int size = ctx.type().size();
         List<Expr.TypeExpr> types = ctx.type().stream().map(t -> (Expr.TypeExpr) visit(t)).toList();
         return new Expr.TypeExpr.FunctionType(

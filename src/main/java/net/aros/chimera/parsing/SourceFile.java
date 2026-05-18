@@ -1,4 +1,4 @@
-package net.aros.language.parsing;
+package net.aros.chimera.parsing;
 
 import java.io.IOException;
 import java.nio.file.Files;

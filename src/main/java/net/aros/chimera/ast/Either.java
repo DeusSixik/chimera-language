@@ -1,4 +1,4 @@
-package net.aros.language.ast;
+package net.aros.chimera.ast;
 
 import java.util.Optional;
 import java.util.function.Function;
