@@ -10,7 +10,7 @@ m: map<int, int | float | string?> = {
     2.2: null,
     3: "3"
 };
-m: list<int | float> | map<int | float, int | float | string?>? = null;
+m: list<int | float | map<int | float, int | float | string?>?> = null;
 
 fn mixStafford13(seed: int): int {
 	seed = (seed ^ (seed >> 30)) * -4658895280553007687;
@@ -19,7 +19,7 @@ fn mixStafford13(seed: int): int {
 }
 
 fn generateUniqueSeed(): int {
-	return mth.atomicUpdateAndGet(SEED_UNIQUIFIER, seed=1181783497276652981, newValue=0, time=(gl std).now());
+	return mth.atomicUpdateAndGet(SEED_UNIQUIFIER, seed=1181783497276652981, newValue=0, time=(gl.std).now());
 }
 
 fn xorOther(self: Seed128bit, other: Seed128bit): Seed128bit {
@@ -38,7 +38,7 @@ fn hashCode(self: HashedString): int {
         }
     }
     last = {
-        "key": gl valueVar.param.next.next.seca()
+        "key": gl.valueVar.param.next.next.seca()
     };
     return h;
 }

@@ -3,7 +3,6 @@ package net.aros.language.parsing;
 import net.aros.language.LangParser;
 import net.aros.language.LangParserBaseVisitor;
 import net.aros.language.ast.Either;
-import net.aros.language.ast.ScopeSpecifier;
 import net.aros.language.ast.SourcePos;
 import net.aros.language.ast.Modifier;
 import net.aros.language.ast.first.Expr;
@@ -48,11 +47,7 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
         SourcePos pos = pos(ctx);
         return new Stmt.ExprStmt(new Expr.AssignExpr(
                 ctx.modifier().stream().map(this::mod).toList(),
-                new Expr.VarExpr(
-                        ctx.scopeSpecifier() == null ? ScopeSpecifier.getDefault() : scopeSpecifier(ctx.scopeSpecifier()),
-                        ctx.Identifier().getText(),
-                        pos
-                ),
+                new Expr.VarExpr(ctx.Identifier().getText(), pos),
                 Optional.of(new Expr.TypeExpr.FunctionType(
                         ctx.parameters().parameter().stream().map(p -> ((Expr.ParameterExpr) visit(p)).type().orElse(new Expr.TypeExpr.IdentifierType("any", pos(p)))).toList(),
                         ctx.type() == null ? new Expr.TypeExpr.IdentifierType("any", pos(ctx.Colon().getSymbol())) : (Expr.TypeExpr) visit(ctx.type()),
@@ -215,11 +210,6 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
         throw new IllegalArgumentException("Unknown mod");
     }
 
-    private ScopeSpecifier scopeSpecifier(LangParser.ScopeSpecifierContext ctx) {
-        if (ctx.Gl() != null) return ScopeSpecifier.GLOBAL;
-        return ScopeSpecifier.getDefault();
-    }
-
     @Override
     public Node visitNamedArgument(LangParser.NamedArgumentContext ctx) {
         return new Expr.ArgumentExpr(Optional.of(ctx.Identifier().getText()), (Expr) visit(ctx.expr()), pos(ctx));
@@ -327,7 +317,6 @@ public class Antlr2LangVisitor extends LangParserBaseVisitor<Node> {
         if (ctx.False() != null) return new Expr.LiteralExpr(false, pos(ctx));
         if (ctx.Null() != null) return new Expr.LiteralExpr(null, pos(ctx));
         if (ctx.Identifier() != null) return new Expr.VarExpr(
-                ctx.scopeSpecifier() == null ? ScopeSpecifier.getDefault() : scopeSpecifier(ctx.scopeSpecifier()),
                 ctx.Identifier().getText(),
                 pos(ctx)
         );

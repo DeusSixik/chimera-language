@@ -25,7 +25,7 @@ exprStmt
     ;
 
 fnStmt
-    : scopeSpecifier? modifier* Fn Identifier LParen parameters RParen (Colon type)? (block | (Assign expr))
+    : modifier* Fn Identifier LParen parameters RParen (Colon type)? (block | (Assign expr))
     ;
 
 returnStmt
@@ -103,12 +103,8 @@ modifier
     | Const
     ;
 
-scopeSpecifier
-    : Gl
-    ;
-
 assignment
-    : scopeSpecifier? modifier* primary postfix* (Colon type)? assignmentOperator assignment
+    : modifier* primary postfix* (Colon type)? assignmentOperator assignment
     | logicalOr
     ;
 
@@ -226,7 +222,7 @@ primary
     | True
     | False
     | Null
-    | scopeSpecifier? Identifier
+    | Identifier
     | LParen expr RParen
     ;
 

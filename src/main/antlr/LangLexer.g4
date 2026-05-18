@@ -17,7 +17,6 @@ Do                       : 'do'         ;
 Fn                       : 'fn'         ;
 Return                   : 'return'     ;
 Const                    : 'const'      ;
-Gl                       : 'gl'         ;
 Tuple                    : 'tuple'      ;
 List                     : 'list'       ;
 Map                      : 'map'        ;

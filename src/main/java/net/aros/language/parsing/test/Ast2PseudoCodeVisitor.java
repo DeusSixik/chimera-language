@@ -102,7 +102,7 @@ public class Ast2PseudoCodeVisitor implements LangVisitor<String> {
 
     @Override
     public String visitBinaryExpr(Expr.BinaryExpr expr) {
-        return visit(expr.left()) + expr.op().getValues().getFirst() + visit(expr.right());
+        return visit(expr.left()) + " " + expr.op().getValues().getFirst() + " " + visit(expr.right());
     }
 
     @Override
@@ -122,7 +122,7 @@ public class Ast2PseudoCodeVisitor implements LangVisitor<String> {
 
     @Override
     public String visitVarExpr(Expr.VarExpr expr) {
-        return expr.scopeSpecifier().name() + " " + expr.name();
+        return expr.name();
     }
 
     @Override
