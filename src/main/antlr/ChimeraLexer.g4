@@ -20,6 +20,7 @@ Const                    : 'const'      ;
 Tuple                    : 'tuple'      ;
 List                     : 'list'       ;
 Map                      : 'map'        ;
+Try                      : 'try'        ;
 
 // Symbols
 LParen                   : '('          ;
@@ -35,6 +36,8 @@ Dot                      : '.'          ;
 QuestionMark             : '?'          ;
 At                       : '@'          ;
 RArrow                   : '->'         ;
+ExclamationMark          : '!'          ;
+DoubleExclamationMark    : '!!'         ;
 
 // Operators
 PlusAssign               : '+='         ;
@@ -63,7 +66,6 @@ BitNot                   : '~'          ;
 LogicAndAssign           : '&&='        ;
 LogicAnd                 : '&&' | 'and' ;
 LogicOrAssign            : '||='        ;
-LogicNot                 : '!'  | 'not' ;
 LogicXorAssign           : '^^='        ;
 LogicXor                 : '^^' | 'xor' ;
 LogicOr                  : '||' | 'or'  ;

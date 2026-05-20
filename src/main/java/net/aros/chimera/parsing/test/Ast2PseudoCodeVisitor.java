@@ -2,7 +2,9 @@ package net.aros.chimera.parsing.test;
 
 import net.aros.chimera.ast.Modifier;
 import net.aros.chimera.ast.first.*;
+import net.aros.chimera.ast.ops.UnwrapType;
 
+import javax.swing.text.TabableView;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -92,6 +94,16 @@ public class Ast2PseudoCodeVisitor implements ChiVisitor<String> {
                     .append(visit(expr.cond())).append(" ? ").append(visit(expr.thenExpr())).append(" : ").append(visit(expr.elseExpr()))
                     .append(")");
         });
+    }
+
+    @Override
+    public String visitShortTryExpr(Expr.ShortTryExpr expr) {
+        return "try " + visit(expr.expr());
+    }
+
+    @Override
+    public String visitUnwrapExpr(Expr.UnwrapExpr expr) {
+        return "(" + visit(expr.expr()) + ")" + (expr.type() == UnwrapType.NULLABLE ? "!" : "!!");
     }
 
     @Override

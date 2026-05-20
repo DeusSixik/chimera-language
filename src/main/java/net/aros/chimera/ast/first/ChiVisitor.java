@@ -20,6 +20,8 @@ public interface ChiVisitor<T> {
     T visitParameterExpr(Expr.ParameterExpr expr);
     T visitArgumentExpr(Expr.ArgumentExpr expr);
     T visitTernaryExpr(Expr.TernaryExpr expr);
+    T visitShortTryExpr(Expr.ShortTryExpr expr);
+    T visitUnwrapExpr(Expr.UnwrapExpr expr);
     T visitIdentifierType(Expr.TypeExpr.IdentifierType expr);
     T visitUnionTypeExpr(Expr.TypeExpr.UnionTypeExpr expr);
     T visitIntersectionTypeExpr(Expr.TypeExpr.IntersectionTypeExpr expr);
@@ -50,6 +52,8 @@ public interface ChiVisitor<T> {
             case Expr.TypeExpr.MapTypeExpr expr -> visitMapTypeExpr(expr);
             case Expr.TypeExpr.FunctionType expr -> visitFunctionType(expr);
             case Expr.TernaryExpr expr -> visitTernaryExpr(expr);
+            case Expr.ShortTryExpr expr -> visitShortTryExpr(expr);
+            case Expr.UnwrapExpr expr -> visitUnwrapExpr(expr);
             case Stmt.ExprStmt stmt -> visitExprStmt(stmt);
             case Stmt.IfStmt stmt -> visitIfStmt(stmt);
             case Stmt.BlockStmt stmt -> visitBlockStmt(stmt);

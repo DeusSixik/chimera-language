@@ -5,6 +5,7 @@ import net.aros.chimera.ast.SourcePos;
 import net.aros.chimera.ast.Modifier;
 import net.aros.chimera.ast.ops.BinaryOp;
 import net.aros.chimera.ast.ops.UnaryOp;
+import net.aros.chimera.ast.ops.UnwrapType;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +22,8 @@ public sealed interface Expr extends Node {
     record ParameterExpr(String name, Optional<TypeExpr> type, Optional<Expr> defaultValue, SourcePos pos) implements Expr {}
     record ArgumentExpr(Optional<String> name, Expr value, SourcePos pos) implements Expr {}
     record TernaryExpr(Expr cond, Expr thenExpr, Expr elseExpr, SourcePos pos) implements Expr {}
+    record ShortTryExpr(Expr expr, SourcePos pos) implements Expr {}
+    record UnwrapExpr(Expr expr, UnwrapType type, SourcePos pos) implements Expr {}
 
     sealed interface TypeExpr extends Expr {
         record IdentifierType(String name, SourcePos pos) implements TypeExpr {}

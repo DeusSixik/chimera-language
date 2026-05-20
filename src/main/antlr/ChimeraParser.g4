@@ -179,8 +179,13 @@ factor
     ;
 
 unary
-    : (LogicNot | Plus | Minus | BitNot) unary
+    : (ExclamationMark | Plus | Minus | BitNot) unary
+    | shortTry
     | call
+    ;
+
+shortTry
+    : Try unary
     ;
 
 call
@@ -188,8 +193,26 @@ call
     ;
 
 postfix
+    : argumentsPostfix
+    | memberAccessPostfix
+    | strictUnwrapPostfix
+    | unwrapPostfix
+    ;
+
+argumentsPostfix
     : LParen arguments RParen
-    | Dot Identifier
+    ;
+
+memberAccessPostfix
+    : Dot Identifier
+    ;
+
+unwrapPostfix
+    : ExclamationMark
+    ;
+
+strictUnwrapPostfix
+    : DoubleExclamationMark
     ;
 
 arguments

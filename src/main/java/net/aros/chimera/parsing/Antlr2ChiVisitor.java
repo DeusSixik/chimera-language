@@ -12,6 +12,7 @@ import net.aros.chimera.ast.first.Stmt;
 import net.aros.chimera.ast.ops.AssignmentOp;
 import net.aros.chimera.ast.ops.BinaryOp;
 import net.aros.chimera.ast.ops.UnaryOp;
+import net.aros.chimera.ast.ops.UnwrapType;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -196,10 +197,14 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
 
     private Expr buildPostfixExpr(Expr expr, List<ChimeraParser.PostfixContext> postfixes) {
         for (ChimeraParser.PostfixContext postfix : postfixes) {
-            if (postfix.arguments() != null)
-                expr = new Expr.CallExpr(expr, postfix.arguments().argument().stream().map(arg -> (Expr.ArgumentExpr) visit(arg)).toList(), pos(postfix));
-            else
-                expr = new Expr.MemberAccessExpr(expr, postfix.Identifier().getText(), pos(postfix));
+            if (postfix.argumentsPostfix() != null)
+                expr = new Expr.CallExpr(expr, postfix.argumentsPostfix().arguments().argument().stream().map(arg -> (Expr.ArgumentExpr) visit(arg)).toList(), pos(postfix));
+            else if (postfix.memberAccessPostfix() != null)
+                expr = new Expr.MemberAccessExpr(expr, postfix.memberAccessPostfix().Identifier().getText(), pos(postfix));
+            else if (postfix.strictUnwrapPostfix() != null)
+                expr = new Expr.UnwrapExpr(expr, UnwrapType.STRICT, pos(postfix));
+            else if (postfix.unwrapPostfix() != null)
+                expr = new Expr.UnwrapExpr(expr, UnwrapType.NULLABLE, pos(postfix));
         }
         return expr;
     }
@@ -289,9 +294,15 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
     @Override
     public Node visitUnary(ChimeraParser.UnaryContext ctx) {
         if (ctx.call() != null) return visit(ctx.call());
+        if (ctx.shortTry() != null) return visit(ctx.shortTry());
         var op = UnaryOp.byValue(ctx.getChild(0).getText());
         Expr right = (Expr) visit(ctx.unary());
         return new Expr.UnaryExpr(op.orElseThrow(), right, pos(ctx));
+    }
+
+    @Override
+    public Node visitShortTry(ChimeraParser.ShortTryContext ctx) {
+        return new Expr.ShortTryExpr((Expr) visit(ctx.unary()), pos(ctx));
     }
 
     @Override
