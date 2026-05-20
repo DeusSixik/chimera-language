@@ -86,6 +86,15 @@ public class Ast2PseudoCodeVisitor implements ChiVisitor<String> {
     }
 
     @Override
+    public String visitTernaryExpr(Expr.TernaryExpr expr) {
+        return build(b -> {
+            b       .append("(")
+                    .append(visit(expr.cond())).append(" ? ").append(visit(expr.thenExpr())).append(" : ").append(visit(expr.elseExpr()))
+                    .append(")");
+        });
+    }
+
+    @Override
     public String visitLiteralExpr(Expr.LiteralExpr expr) {
         if (expr.value() instanceof List<?> list) {
             return "[" + list.stream().map(this::toStringNodeCheck).collect(Collectors.joining(", ")) + "]";

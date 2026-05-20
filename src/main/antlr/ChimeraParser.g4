@@ -105,7 +105,7 @@ modifier
 
 assignment
     : modifier* primary postfix* (Colon type)? assignmentOperator assignment
-    | logicalOr
+    | ternary
     ;
 
 assignmentOperator
@@ -128,6 +128,10 @@ assignmentOperator
 
 lambda
     : Fn LParen parameters RParen (Colon type)? (block | (Assign expr))
+    ;
+
+ternary
+    : logicalOr (QuestionMark expr Colon ternary)?
     ;
 
 logicalOr

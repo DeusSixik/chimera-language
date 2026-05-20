@@ -11,6 +11,8 @@ m: map<int, int | float | string?> = {
     3: "3"
 };
 m: list<int | float | map<int | float, int | float | string?>?> = null;
+m = cond1 or cond2 or cond3;
+m = cond ? a : cond2 ? b : c;
 
 fn mixStafford13(seed: int): int {
 	seed = (seed ^ (seed >> 30)) * -4658895280553007687;

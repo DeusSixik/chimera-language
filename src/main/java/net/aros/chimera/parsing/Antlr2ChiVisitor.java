@@ -176,7 +176,7 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
 
     @Override
     public Node visitAssignment(ChimeraParser.AssignmentContext ctx) {
-        if (ctx.logicalOr() != null) return visit(ctx.logicalOr());
+        if (ctx.ternary() != null) return visit(ctx.ternary());
 
         Expr target = buildPostfixExpr((Expr) visit(ctx.primary()), ctx.postfix());
         Expr initializer = (Expr) visit(ctx.assignment());
@@ -208,6 +208,17 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
         if (mod.Const() != null) return Modifier.CONST;
         if (mod.At() != null) return Modifier.STATIC;
         throw new IllegalArgumentException("Unknown mod");
+    }
+
+    @Override
+    public Node visitTernary(ChimeraParser.TernaryContext ctx) {
+        Expr condition = (Expr) visit(ctx.logicalOr());
+        if (ctx.QuestionMark() == null) return condition;
+
+        Expr thenBranch = (Expr) visit(ctx.expr());
+        Expr elseBranch = (Expr) visit(ctx.ternary());
+
+        return new Expr.TernaryExpr(condition, thenBranch, elseBranch, pos(ctx));
     }
 
     @Override
