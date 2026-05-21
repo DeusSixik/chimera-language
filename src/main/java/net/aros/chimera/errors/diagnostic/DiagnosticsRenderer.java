@@ -30,7 +30,7 @@ public class DiagnosticsRenderer {
             System.err.printf("   = help: %s%n", diagnostic.help());
         }
 
-        System.err.printf("   = notion: %s%n", diagnostic.code().getSolution());
+        System.err.printf("   = note: %s%n", diagnostic.code().getSolution());
 
         System.err.println();
     }
@@ -38,7 +38,7 @@ public class DiagnosticsRenderer {
     public static void renderErrorTable() {
         System.err.println("Error Codes Reference Table:");
         System.err.println("--------------------------------------------------------------------------------");
-        System.err.printf("| %-6s | %-20s | %-45s |%n", "Code", "Description", "Notion (Solution)");
+        System.err.printf("| %-6s | %-20s | %-45s |%n", "Code", "Description", "Note (Solution)");
         System.err.println("--------------------------------------------------------------------------------");
         for (ErrorCode code : ErrorCode.values()) {
             System.err.printf("| %-6s | %-20s | %-45s |%n", code.name(), code.getDescription(), code.getSolution());

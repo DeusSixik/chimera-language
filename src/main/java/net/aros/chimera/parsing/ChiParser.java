@@ -22,7 +22,7 @@ public class ChiParser {
         lexer.addErrorListener(errorListener);
         parser.removeErrorListeners();
         parser.addErrorListener(errorListener);
-//        parser.setErrorHandler(new ChimeraErrorStrategy(new DefaultParseEventListener(sourceFile, diagnostics)));
+        parser.setErrorHandler(new net.aros.chimera.errors.ChimeraErrorStrategy());
 
 
         ParseTree tree = parser.program();

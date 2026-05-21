@@ -3,7 +3,8 @@ package net.aros.chimera.errors.diagnostic;
 public enum ErrorCode {
     E0001("Syntax Error", "Check your syntax, maybe you missed a semicolon or have a typo."),
     E0002("Unexpected Token", "The parser found a token that doesn't belong here. Check the surrounding code."),
-    E0003("Mismatched Input", "The input doesn't match the expected grammar rules. Ensure you are following the language specification.");
+    E0003("Mismatched Input", "The input doesn't match the expected grammar rules. Ensure you are following the language specification."),
+    E0004("Missing Separator", "It looks like you missed a comma or a semicolon. Check your literals or statements.");
 
     private final String description;
     private final String solution;
