@@ -14,7 +14,7 @@ l: list<int> = [1, 2, 3];
 l: list<int | string> = [1, 2, "3"];
 m: map<int, int | float | string?> = {
     1: "1",
-    2.2: null,
+    2.2: null
     3: "3"
 };
 m: list<int | float | map<int | float, int | float | string?>?> = null;
