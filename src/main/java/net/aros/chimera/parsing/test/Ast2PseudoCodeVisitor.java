@@ -4,7 +4,6 @@ import net.aros.chimera.ast.Modifier;
 import net.aros.chimera.ast.first.*;
 import net.aros.chimera.ast.ops.UnwrapType;
 
-import javax.swing.text.TabableView;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -22,14 +21,15 @@ public class Ast2PseudoCodeVisitor implements ChiVisitor<String> {
 
     @Override
     public String visitExprStmt(Stmt.ExprStmt stmt) {
-        return visit(stmt.expr()) + ";";
+        return stmt.annotations().stream().map(a -> visit(a) + "\n").collect(Collectors.joining()) + visit(stmt.expr()) + ";";
     }
 
     @Override
     public String visitIfStmt(Stmt.IfStmt stmt) {
         return build(b -> {
+            b.append(stmt.annotations().stream().map(a -> visit(a) + "\n").collect(Collectors.joining()));
             b.append("if ").append(visit(stmt.cond())).append(" ").append(visit(stmt.thenStmt()));
-            stmt.elseStmt().ifPresent(elseStmt -> b.append(" ").append(visit(elseStmt)));
+            stmt.elseStmt().ifPresent(elseStmt -> b.append("\nelse ").append(visit(elseStmt)));
         });
     }
 
@@ -46,17 +46,24 @@ public class Ast2PseudoCodeVisitor implements ChiVisitor<String> {
 
     @Override
     public String visitWhileStmt(Stmt.WhileStmt stmt) {
-        return build(b -> b.append("while ").append(visit(stmt.cond())).append(" ").append(visit(stmt.thenBlock())));
+        return build(b -> {
+            b.append(stmt.annotations().stream().map(a -> visit(a) + "\n").collect(Collectors.joining()));
+            b.append("while ").append(visit(stmt.cond())).append(" ").append(visit(stmt.thenBlock()));
+        });
     }
 
     @Override
     public String visitDoWhileStmt(Stmt.DoWhileStmt stmt) {
-        return build(b -> b.append("do ").append(visit(stmt.doBlock())).append(" ").append(visit(stmt.cond())).append(";"));
+        return build(b -> {
+            b.append(stmt.annotations().stream().map(a -> visit(a) + "\n").collect(Collectors.joining()));
+            b.append("do ").append(visit(stmt.doBlock())).append(" ").append(visit(stmt.cond())).append(";");
+        });
     }
 
     @Override
     public String visitForStmt(Stmt.ForStmt stmt) {
         return build(b -> {
+            b.append(stmt.annotations().stream().map(a -> visit(a) + "\n").collect(Collectors.joining()));
             b.append("for ").append(String.join(", ", stmt.variables())).append(" in ")
                     .append(visit(stmt.iterator())).append(" ").append(visit(stmt.body()));
         });
@@ -64,7 +71,8 @@ public class Ast2PseudoCodeVisitor implements ChiVisitor<String> {
 
     @Override
     public String visitReturnStmt(Stmt.ReturnStmt stmt) {
-        return "return" + stmt.expr().map(this::visit).map(s -> " " + s).orElse("") + ";";
+        return stmt.annotations().stream().map(a -> visit(a) + "\n").collect(Collectors.joining())
+                + "return" + stmt.expr().map(this::visit).map(s -> " " + s).orElse("") + ";";
     }
 
     @Override
@@ -122,6 +130,16 @@ public class Ast2PseudoCodeVisitor implements ChiVisitor<String> {
     }
 
     @Override
+    public String visitAnnotationExpr(Expr.AnnotationExpr expr) {
+        return build(b -> {
+            b.append("[");
+            b.append(expr.name());
+            expr.args().ifPresent(args -> b.append("(").append(String.join(", ", args.stream().map(this::visit).toList())).append(")"));
+            b.append("]");
+        });
+    }
+
+    @Override
     public String visitBinaryExpr(Expr.BinaryExpr expr) {
         return visit(expr.left()) + " " + expr.op().getValues().getFirst() + " " + visit(expr.right());
     }
@@ -149,6 +167,7 @@ public class Ast2PseudoCodeVisitor implements ChiVisitor<String> {
     @Override
     public String visitParameterExpr(Expr.ParameterExpr expr) {
         return build(b -> {
+            b.append(expr.annotations().stream().map(a -> visit(a) + " ").collect(Collectors.joining()));
             b.append(expr.name());
             expr.type().ifPresent(type -> b.append(": ").append(visit(type)));
             expr.defaultValue().ifPresent(value -> b.append(" = ").append(visit(value)));

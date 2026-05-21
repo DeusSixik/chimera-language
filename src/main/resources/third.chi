@@ -3,6 +3,11 @@ const SILVER_RATIO_64 = 7640891576956012809;
 test: float = 2;
 test += 2;
 
+if true {}
+else if true {}
+else if true {}
+else {}
+
 l: list<int> = [1, 2, 3];
 l: list<int | string> = [1, 2, "3"];
 m: map<int, int | float | string?> = {
@@ -21,8 +26,10 @@ fn mixStafford13(seed: int): int {
 	return seed ^ (seed >> 31);
 }
 
+[Unused][Peep]
+[Poop(real = "Da")]
 fn generateUniqueSeed(): int {
-	return mth.atomicUpdateAndGet(SEED_UNIQUIFIER, seed=1181783497276652981, newValue=0, time=(gl.std).now());
+	return mth.atomicUpdateAndGet(SEED_UNIQUIFIER, seed=1181783497276652981, newValue=0, time=gl.std.now());
 }
 
 fn xorOther(self: Seed128bit, other: Seed128bit): Seed128bit {

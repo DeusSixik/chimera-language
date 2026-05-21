@@ -46,37 +46,41 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
     @Override
     public Node visitFnStmt(ChimeraParser.FnStmtContext ctx) {
         SourcePos pos = pos(ctx);
-        return new Stmt.ExprStmt(new Expr.AssignExpr(
-                ctx.modifier().stream().map(this::mod).toList(),
-                new Expr.VarExpr(ctx.Identifier().getText(), pos),
-                Optional.of(new Expr.TypeExpr.FunctionType(
-                        ctx.parameters().parameter().stream().map(p -> ((Expr.ParameterExpr) visit(p)).type().orElse(new Expr.TypeExpr.IdentifierType("any", pos(p)))).toList(),
-                        ctx.type() == null ? new Expr.TypeExpr.IdentifierType("any", pos(ctx.Colon().getSymbol())) : (Expr.TypeExpr) visit(ctx.type()),
-                        pos(ctx)
-                )),
-                new Expr.LambdaExpr(
-                        ctx.parameters().parameter().stream().map(p -> (Expr.ParameterExpr) visit(p)).toList(),
-                        visitNullable(ctx.type(), Expr.TypeExpr.class),
-                        ctx.block() == null ? Either.right((Expr) visit(ctx.expr())) : Either.left((Stmt.BlockStmt) visit(ctx.block())),
+        // TODO: 21.05.2026 reattach annotations
+
+        return new Stmt.ExprStmt(
+                annotations(ctx.annotations()),
+                new Expr.AssignExpr(
+                        ctx.modifier().stream().map(this::mod).toList(),
+                        new Expr.VarExpr(ctx.Identifier().getText(), pos),
+                        Optional.of(new Expr.TypeExpr.FunctionType(
+                                ctx.parameters().parameter().stream().map(p -> ((Expr.ParameterExpr) visit(p)).type().orElse(new Expr.TypeExpr.IdentifierType("any", pos(p)))).toList(),
+                                ctx.type() == null ? new Expr.TypeExpr.IdentifierType("any", pos(ctx.Colon().getSymbol())) : (Expr.TypeExpr) visit(ctx.type()),
+                                pos(ctx)
+                        )),
+                        new Expr.LambdaExpr(
+                                ctx.parameters().parameter().stream().map(p -> (Expr.ParameterExpr) visit(p)).toList(),
+                                visitNullable(ctx.type(), Expr.TypeExpr.class),
+                                ctx.block() == null ? Either.right((Expr) visit(ctx.expr())) : Either.left((Stmt.BlockStmt) visit(ctx.block())),
+                                pos
+                        ),
                         pos
-                ),
-                pos
-        ), pos);
+                ), pos);
     }
 
     @Override
     public Node visitParameter(ChimeraParser.ParameterContext ctx) {
-        return new Expr.ParameterExpr(ctx.Identifier().getText(), visitNullable(ctx.type(), Expr.TypeExpr.class), visitNullable(ctx.expr(), Expr.class), pos(ctx));
+        return new Expr.ParameterExpr(annotations(ctx.annotations()), ctx.Identifier().getText(), visitNullable(ctx.type(), Expr.TypeExpr.class), visitNullable(ctx.expr(), Expr.class), pos(ctx));
     }
 
     @Override
     public Node visitReturnStmt(ChimeraParser.ReturnStmtContext ctx) {
-        return new Stmt.ReturnStmt(visitNullable(ctx.expr(), Expr.class), pos(ctx));
+        return new Stmt.ReturnStmt(annotations(ctx.annotations()), visitNullable(ctx.expr(), Expr.class), pos(ctx));
     }
 
     @Override
     public Node visitExprStmt(ChimeraParser.ExprStmtContext ctx) {
-        return new Stmt.ExprStmt((Expr) visit(ctx.expr()), pos(ctx));
+        return new Stmt.ExprStmt(annotations(ctx.annotations()), (Expr) visit(ctx.expr()), pos(ctx));
     }
 
     @Override
@@ -89,12 +93,12 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
 
     @Override
     public Node visitParenIfStmt(ChimeraParser.ParenIfStmtContext ctx) {
-        return new Stmt.IfStmt((Expr) visit(ctx.expr()), (Stmt) visit(ctx.blockOrStmt(0)), visitNullable(ctx.blockOrStmt(1), Stmt.class), pos(ctx));
+        return new Stmt.IfStmt(annotations(ctx.annotations()), (Expr) visit(ctx.expr()), (Stmt) visit(ctx.blockOrStmt(0)), visitNullable(ctx.blockOrStmt(1), Stmt.class), pos(ctx));
     }
 
     @Override
     public Node visitParenlessIfStmt(ChimeraParser.ParenlessIfStmtContext ctx) {
-        return new Stmt.IfStmt((Expr) visit(ctx.expr()), (Stmt) visit(ctx.blockOrStmt(0)), visitNullable(ctx.blockOrStmt(1), Stmt.class), pos(ctx));
+        return new Stmt.IfStmt(annotations(ctx.annotations()), (Expr) visit(ctx.expr()), (Stmt) visit(ctx.blockOrStmt(0)), visitNullable(ctx.blockOrStmt(1), Stmt.class), pos(ctx));
     }
 
     @Override
@@ -108,6 +112,7 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
     @Override
     public Node visitParenForStmt(ChimeraParser.ParenForStmtContext ctx) {
         return new Stmt.ForStmt(
+                annotations(ctx.annotations()),
                 ctx.Identifier().stream().map(TerminalNode::getText).toList(),
                 (Expr) visit(ctx.expr()),
                 (Stmt) visit(ctx.blockOrStmt()),
@@ -118,6 +123,7 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
     @Override
     public Node visitParenlessForStmt(ChimeraParser.ParenlessForStmtContext ctx) {
         return new Stmt.ForStmt(
+                annotations(ctx.annotations()),
                 ctx.Identifier().stream().map(TerminalNode::getText).toList(),
                 (Expr) visit(ctx.expr()),
                 (Stmt) visit(ctx.blockOrStmt()),
@@ -135,12 +141,12 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
 
     @Override
     public Node visitParenDoWhileStmt(ChimeraParser.ParenDoWhileStmtContext ctx) {
-        return new Stmt.DoWhileStmt((Stmt.BlockStmt) visit(ctx.block()), (Expr) visit(ctx.expr()), pos(ctx));
+        return new Stmt.DoWhileStmt(annotations(ctx.annotations()), (Stmt.BlockStmt) visit(ctx.block()), (Expr) visit(ctx.expr()), pos(ctx));
     }
 
     @Override
     public Node visitParenlessDoWhileStmt(ChimeraParser.ParenlessDoWhileStmtContext ctx) {
-        return new Stmt.DoWhileStmt((Stmt.BlockStmt) visit(ctx.block()), (Expr) visit(ctx.expr()), pos(ctx));
+        return new Stmt.DoWhileStmt(annotations(ctx.annotations()), (Stmt.BlockStmt) visit(ctx.block()), (Expr) visit(ctx.expr()), pos(ctx));
     }
 
     @Override
@@ -153,12 +159,12 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
 
     @Override
     public Node visitParenWhileStmt(ChimeraParser.ParenWhileStmtContext ctx) {
-        return new Stmt.WhileStmt((Expr) visit(ctx.expr()), (Stmt.BlockStmt) visit(ctx.block()), pos(ctx));
+        return new Stmt.WhileStmt(annotations(ctx.annotations()), (Expr) visit(ctx.expr()), (Stmt.BlockStmt) visit(ctx.block()), pos(ctx));
     }
 
     @Override
     public Node visitParenlessWhileStmt(ChimeraParser.ParenlessWhileStmtContext ctx) {
-        return new Stmt.WhileStmt((Expr) visit(ctx.expr()), (Stmt.BlockStmt) visit(ctx.block()), pos(ctx));
+        return new Stmt.WhileStmt(annotations(ctx.annotations()), (Expr) visit(ctx.expr()), (Stmt.BlockStmt) visit(ctx.block()), pos(ctx));
     }
 
     @Override
@@ -452,5 +458,18 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
                 types.getLast(),
                 pos(ctx)
         );
+    }
+
+    @Override
+    public Node visitAnnotationExpr(ChimeraParser.AnnotationExprContext ctx) {
+        return new Expr.AnnotationExpr(
+                ctx.Identifier().getText(),
+                ctx.arguments() == null ? Optional.empty() : Optional.of(ctx.arguments().argument().stream().map(a -> (Expr.ArgumentExpr) visit(a)).toList()),
+                pos(ctx)
+        );
+    }
+
+    private List<Expr.AnnotationExpr> annotations(ChimeraParser.AnnotationsContext ctx) {
+        return ctx.annotation().stream().map(a -> (Expr.AnnotationExpr) visit(a.annotationExpr())).toList();
     }
 }

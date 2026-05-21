@@ -21,15 +21,15 @@ stmt
     ;
 
 exprStmt
-    : expr Semicolon
+    : annotations expr Semicolon
     ;
 
 fnStmt
-    : modifier* Fn Identifier LParen parameters RParen (Colon type)? (block | (Assign expr))
+    : annotations modifier* Fn Identifier LParen parameters RParen (Colon type)? (block | (Assign expr))
     ;
 
 returnStmt
-    : Return expr? Semicolon
+    : annotations Return expr? Semicolon
     ;
 
 ifStmt
@@ -38,11 +38,11 @@ ifStmt
     ;
 
 parenIfStmt
-    : If LParen expr RParen blockOrStmt (Else blockOrStmt)?
+    : annotations If LParen expr RParen blockOrStmt (Else blockOrStmt)?
     ;
 
 parenlessIfStmt
-    : If expr blockOrStmt (Else blockOrStmt)?
+    : annotations If expr blockOrStmt (Else blockOrStmt)?
     ;
 
 blockOrStmt
@@ -56,11 +56,11 @@ forStmt
     ;
 
 parenForStmt
-    : For LParen (Identifier (Comma Identifier)*) In expr RParen blockOrStmt
+    : annotations For LParen (Identifier (Comma Identifier)*) In expr RParen blockOrStmt
     ;
 
 parenlessForStmt
-    : For (Identifier (Comma Identifier)*) In expr blockOrStmt
+    : annotations For (Identifier (Comma Identifier)*) In expr blockOrStmt
     ;
 
 doWhileStmt
@@ -69,11 +69,11 @@ doWhileStmt
     ;
 
 parenDoWhileStmt
-    : Do block While LParen expr RParen Semicolon
+    : annotations Do block While LParen expr RParen Semicolon
     ;
 
 parenlessDoWhileStmt
-    : Do block While expr Semicolon
+    : annotations Do block While expr Semicolon
     ;
 
 whileStmt
@@ -82,11 +82,11 @@ whileStmt
     ;
 
 parenWhileStmt
-    : While LParen expr RParen block
+    : annotations While LParen expr RParen block
     ;
 
 parenlessWhileStmt
-    : While expr block
+    : annotations While expr block
     ;
 
 block
@@ -237,7 +237,7 @@ parameters
     ;
 
 parameter
-    : Identifier (Colon type)? (Assign expr)?
+    : annotations Identifier (Colon type)? (Assign expr)?
     ;
 
 primary
@@ -303,4 +303,16 @@ listType
 
 mapType
     : Map Less type Comma type Greater
+    ;
+
+annotations
+    : annotation*
+    ;
+
+annotation
+    : LBracket annotationExpr RBracket
+    ;
+
+annotationExpr
+    : Identifier (LParen arguments RParen)?
     ;

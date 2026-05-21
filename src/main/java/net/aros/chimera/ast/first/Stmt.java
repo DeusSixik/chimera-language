@@ -6,11 +6,11 @@ import java.util.List;
 import java.util.Optional;
 
 public sealed interface Stmt extends Node {
-    record ExprStmt(Expr expr, SourcePos pos) implements Stmt {}
-    record IfStmt(Expr cond, Stmt thenStmt, Optional<Stmt> elseStmt, SourcePos pos) implements Stmt {}
+    record ExprStmt(List<Expr.AnnotationExpr> annotations, Expr expr, SourcePos pos) implements Stmt {}
+    record IfStmt(List<Expr.AnnotationExpr> annotations, Expr cond, Stmt thenStmt, Optional<Stmt> elseStmt, SourcePos pos) implements Stmt {}
     record BlockStmt(List<Stmt> stmts, SourcePos pos) implements Stmt {}
-    record WhileStmt(Expr cond, BlockStmt thenBlock, SourcePos pos) implements Stmt {}
-    record DoWhileStmt(BlockStmt doBlock, Expr cond, SourcePos pos) implements Stmt {}
-    record ForStmt(List<String> variables, Expr iterator, Stmt body, SourcePos pos) implements Stmt {}
-    record ReturnStmt(Optional<Expr> expr, SourcePos pos) implements Stmt {}
+    record WhileStmt(List<Expr.AnnotationExpr> annotations, Expr cond, BlockStmt thenBlock, SourcePos pos) implements Stmt {}
+    record DoWhileStmt(List<Expr.AnnotationExpr> annotations, BlockStmt doBlock, Expr cond, SourcePos pos) implements Stmt {}
+    record ForStmt(List<Expr.AnnotationExpr> annotations, List<String> variables, Expr iterator, Stmt body, SourcePos pos) implements Stmt {}
+    record ReturnStmt(List<Expr.AnnotationExpr> annotations, Optional<Expr> expr, SourcePos pos) implements Stmt {}
 }

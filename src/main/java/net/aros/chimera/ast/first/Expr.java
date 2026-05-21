@@ -19,11 +19,12 @@ public sealed interface Expr extends Node {
     record CallExpr(Expr callee, List<ArgumentExpr> args, SourcePos pos) implements Expr {}
     record MemberAccessExpr(Expr object, String member, SourcePos pos) implements Expr {}
     record VarExpr(String name, SourcePos pos) implements Expr {}
-    record ParameterExpr(String name, Optional<TypeExpr> type, Optional<Expr> defaultValue, SourcePos pos) implements Expr {}
+    record ParameterExpr(List<Expr.AnnotationExpr> annotations, String name, Optional<TypeExpr> type, Optional<Expr> defaultValue, SourcePos pos) implements Expr {}
     record ArgumentExpr(Optional<String> name, Expr value, SourcePos pos) implements Expr {}
     record TernaryExpr(Expr cond, Expr thenExpr, Expr elseExpr, SourcePos pos) implements Expr {}
     record ShortTryExpr(Expr expr, SourcePos pos) implements Expr {}
     record UnwrapExpr(Expr expr, UnwrapType type, SourcePos pos) implements Expr {}
+    record AnnotationExpr(String name, Optional<List<ArgumentExpr>> args, SourcePos pos) implements Expr {}
 
     sealed interface TypeExpr extends Expr {
         record IdentifierType(String name, SourcePos pos) implements TypeExpr {}
