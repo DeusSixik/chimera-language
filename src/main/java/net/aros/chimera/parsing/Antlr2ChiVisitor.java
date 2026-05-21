@@ -20,6 +20,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.text.Normalizer;
 import java.util.*;
 import java.util.function.IntFunction;
 
@@ -52,7 +53,7 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
                 annotations(ctx.annotations()),
                 new Expr.AssignExpr(
                         ctx.modifier().stream().map(this::mod).toList(),
-                        new Expr.VarExpr(ctx.Identifier().getText(), pos),
+                        new Expr.VarExpr(identifier(ctx.Identifier()), pos),
                         Optional.of(new Expr.TypeExpr.FunctionType(
                                 ctx.parameters().parameter().stream().map(p -> ((Expr.ParameterExpr) visit(p)).type().orElse(new Expr.TypeExpr.IdentifierType("any", pos(p)))).toList(),
                                 ctx.type() == null ? new Expr.TypeExpr.IdentifierType("any", pos(ctx.Colon().getSymbol())) : (Expr.TypeExpr) visit(ctx.type()),
@@ -70,7 +71,7 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
 
     @Override
     public Node visitParameter(ChimeraParser.ParameterContext ctx) {
-        return new Expr.ParameterExpr(annotations(ctx.annotations()), ctx.Identifier().getText(), visitNullable(ctx.type(), Expr.TypeExpr.class), visitNullable(ctx.expr(), Expr.class), pos(ctx));
+        return new Expr.ParameterExpr(annotations(ctx.annotations()), identifier(ctx.Identifier()), visitNullable(ctx.type(), Expr.TypeExpr.class), visitNullable(ctx.expr(), Expr.class), pos(ctx));
     }
 
     @Override
@@ -206,7 +207,7 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
             if (postfix.argumentsPostfix() != null)
                 expr = new Expr.CallExpr(expr, postfix.argumentsPostfix().arguments().argument().stream().map(arg -> (Expr.ArgumentExpr) visit(arg)).toList(), pos(postfix));
             else if (postfix.memberAccessPostfix() != null)
-                expr = new Expr.MemberAccessExpr(expr, postfix.memberAccessPostfix().Identifier().getText(), pos(postfix));
+                expr = new Expr.MemberAccessExpr(expr, identifier(postfix.memberAccessPostfix().Identifier()), pos(postfix));
             else if (postfix.strictUnwrapPostfix() != null)
                 expr = new Expr.UnwrapExpr(expr, UnwrapType.STRICT, pos(postfix));
             else if (postfix.unwrapPostfix() != null)
@@ -234,7 +235,7 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
 
     @Override
     public Node visitNamedArgument(ChimeraParser.NamedArgumentContext ctx) {
-        return new Expr.ArgumentExpr(Optional.of(ctx.Identifier().getText()), (Expr) visit(ctx.expr()), pos(ctx));
+        return new Expr.ArgumentExpr(Optional.of(identifier(ctx.Identifier())), (Expr) visit(ctx.expr()), pos(ctx));
     }
 
     @Override
@@ -345,7 +346,7 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
         if (ctx.False() != null) return new Expr.LiteralExpr(false, pos(ctx));
         if (ctx.Null() != null) return new Expr.LiteralExpr(null, pos(ctx));
         if (ctx.Identifier() != null) return new Expr.VarExpr(
-                ctx.Identifier().getText(),
+                identifier(ctx.Identifier()),
                 pos(ctx)
         );
         if (ctx.expr() != null) return visit(ctx.expr());
@@ -426,7 +427,7 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
 
     @Override
     public Node visitPrimaryType(ChimeraParser.PrimaryTypeContext ctx) {
-        if (ctx.Identifier() != null) return new Expr.TypeExpr.IdentifierType(ctx.Identifier().getText(), pos(ctx));
+        if (ctx.Identifier() != null) return new Expr.TypeExpr.IdentifierType(identifier(ctx.Identifier()), pos(ctx));
         if (ctx.tupleType() != null) return visit(ctx.tupleType());
         if (ctx.listType() != null) return visit(ctx.listType());
         if (ctx.mapType() != null) return visit(ctx.mapType());
@@ -463,7 +464,7 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
     @Override
     public Node visitAnnotationExpr(ChimeraParser.AnnotationExprContext ctx) {
         return new Expr.AnnotationExpr(
-                ctx.Identifier().getText(),
+                identifier(ctx.Identifier()),
                 ctx.arguments() == null ? Optional.empty() : Optional.of(ctx.arguments().argument().stream().map(a -> (Expr.ArgumentExpr) visit(a)).toList()),
                 pos(ctx)
         );
@@ -471,5 +472,9 @@ public class Antlr2ChiVisitor extends ChimeraParserBaseVisitor<Node> {
 
     private List<Expr.AnnotationExpr> annotations(ChimeraParser.AnnotationsContext ctx) {
         return ctx.annotation().stream().map(a -> (Expr.AnnotationExpr) visit(a.annotationExpr())).toList();
+    }
+
+    private String identifier(TerminalNode node) {
+        return Normalizer.normalize(node.getText(), Normalizer.Form.NFC);
     }
 }

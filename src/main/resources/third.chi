@@ -7,6 +7,8 @@ if true {}
 else if true {}
 else if true {}
 else {}
+идентифайер = новый_идентифайер;
+正體字 = "Строка строченька";
 
 l: list<int> = [1, 2, 3];
 l: list<int | string> = [1, 2, "3"];

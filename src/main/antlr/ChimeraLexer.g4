@@ -77,7 +77,7 @@ GreaterEqual             : '>='         ;
 Greater                  : '>'          ;
 Assign                   : '='          ;
 
-Identifier    : [a-zA-Z_][a-zA-Z0-9_]*           ;
+Identifier    : [_\p{L}][_\p{L}\p{N}]*           ;
 IntLiteral    : [0-9]+                           ;
 FloatLiteral  : [0-9]* '.' [0-9]+                ;
 StringLiteral
